@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>住宅ローン計算機 月返済額・総返済額を瞬時に計算 | マネーツールズ</title>
+  <meta name="description" content="住宅ローンの月々返済額・総返済額・総利息を瞬時に計算。繰り上げ返済の効果も試算できる無料シミュレーター。元利均等・元金均等の両方式に対応。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a class="logo" href="index.html">💹 マネーツールズ</a>
+    <nav>
+      <a href="nisa.html">新NISA</a>
+      <a href="furusato.html">ふるさと納税</a>
+      <a href="loan.html" style="background:rgba(255,255,255,.2);color:#fff">住宅ローン</a>
+      <a href="tax.html">副業税金</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-hero">
+  <div class="container">
+    <p class="breadcrumb"><a href="index.html">トップ</a> &rsaquo; 住宅ローン計算機</p>
+    <h1>🏠 住宅ローン計算機</h1>
+    <p>借入額・金利・期間を入力するだけ。月々の返済額・総返済額・総利息を瞬時に計算します。</p>
+  </div>
+</div>
+
+<div class="container">
+  <div class="calc-layout" style="margin-top:28px;">
+
+    <!-- 入力 -->
+    <div class="card">
+      <h2>⚙️ 条件を入力</h2>
+
+      <div class="field">
+        <label>借入金額</label>
+        <div class="input-wrap">
+          <input type="number" id="amount" value="3000" min="100" max="20000" step="100">
+          <span class="unit">万円</span>
+        </div>
+        <div class="range-row">
+          <input type="range" id="amount_r" min="500" max="10000" step="100" value="3000">
+          <span class="range-val" id="amount_rv">3,000万円</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>年利（金利）</label>
+        <div class="input-wrap">
+          <input type="number" id="rate" value="1.5" min="0.1" max="10" step="0.05">
+          <span class="unit">%</span>
+        </div>
+        <div class="range-row">
+          <input type="range" id="rate_r" min="0.1" max="8" step="0.05" value="1.5">
+          <span class="range-val" id="rate_rv">1.5%</span>
+        </div>
+        <p class="hint">変動金利の参考値：0.3〜1.0% / 固定（35年）の参考値：1.5〜2.5%</p>
+      </div>
+
+      <div class="field">
+        <label>返済期間</label>
+        <div class="input-wrap">
+          <input type="number" id="years" value="35" min="1" max="50" step="1">
+          <span class="unit">年</span>
+        </div>
+        <div class="range-row">
+          <input type="range" id="years_r" min="5" max="50" step="1" value="35">
+          <span class="range-val" id="years_rv">35年</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>返済方式</label>
+        <div class="input-wrap">
+          <select id="method" class="no-unit" style="padding-right:12px">
+            <option value="equal_payment" selected>元利均等返済（毎月同額）</option>
+            <option value="equal_principal">元金均等返済（初期が高め・利息が少ない）</option>
+          </select>
+        </div>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--gray-100);margin:16px 0;">
+
+      <h2 style="margin-bottom:12px;">🔄 繰り上げ返済（任意）</h2>
+
+      <div class="field">
+        <label>繰り上げ返済額</label>
+        <div class="input-wrap">
+          <input type="number" id="prepay" value="0" min="0" max="5000" step="50">
+          <span class="unit">万円</span>
+        </div>
+        <p class="hint">0のままなら繰り上げなし</p>
+      </div>
+
+      <div class="field">
+        <label>繰り上げ返済のタイミング（経過年数）</label>
+        <div class="input-wrap">
+          <input type="number" id="prepay_timing" value="5" min="1" max="49" step="1">
+          <span class="unit">年後</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>繰り上げの種別</label>
+        <div class="input-wrap">
+          <select id="prepay_type" class="no-unit" style="padding-right:12px">
+            <option value="shorten" selected>期間短縮型（返済期間を短くする）</option>
+            <option value="reduce">返済額軽減型（月々の返済額を減らす）</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 結果 -->
+    <div class="card">
+      <h2>📊 試算結果</h2>
+
+      <div class="result-highlight">
+        <span class="label">月々の返済額</span>
+        <span class="value" id="r_monthly">—</span>
+      </div>
+
+      <div class="result-list" style="margin-top:16px;">
+        <div class="result-item">
+          <span class="label">総返済額</span>
+          <span class="value" id="r_total">—</span>
+        </div>
+        <div class="result-item">
+          <span class="label">総利息額</span>
+          <span class="value" style="color:#dc2626;" id="r_interest">—</span>
+        </div>
+        <div class="result-item">
+          <span class="label">利息割合</span>
+          <span class="value" id="r_ratio">—</span>
+        </div>
+      </div>
+
+      <div id="prepay_result" style="display:none;margin-top:16px;">
+        <div style="background:var(--green-lt);border-radius:8px;padding:14px 16px;">
+          <p style="font-size:.85rem;font-weight:700;color:var(--green);margin-bottom:8px;">✅ 繰り上げ返済の効果</p>
+          <div class="result-list">
+            <div class="result-item" style="border-color:rgba(5,150,105,.2)">
+              <span class="label" style="font-size:.8rem;">利息削減額</span>
+              <span class="value green" style="font-size:1.1rem;" id="r_prepay_save">—</span>
+            </div>
+            <div class="result-item" style="border-color:rgba(5,150,105,.2)">
+              <span class="label" style="font-size:.8rem;" id="r_prepay_label">短縮期間</span>
+              <span class="value green" style="font-size:1.1rem;" id="r_prepay_effect">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="r_first_payment" style="font-size:.82rem;color:var(--gray-500);margin-top:12px;"></div>
+    </div>
+
+    <!-- チャート -->
+    <div class="chart-wrap full-width">
+      <h2>返済内訳推移（元金 vs 利息）</h2>
+      <canvas id="chart"></canvas>
+    </div>
+
+  </div>
+
+  <!-- アフィリエイト -->
+  <div class="affiliate-box">
+    <h3>🏦 住宅ローンを比較・相談するなら</h3>
+    <p>金利は銀行によって大きく異なります。複数の銀行を無料で比較できるサービスを活用しましょう。</p>
+    <div class="affiliate-links">
+      <!-- ▼▼▼ アフィリエイトリンクをここに貼る ▼▼▼ -->
+      <a class="affiliate-link" href="#" onclick="return false;">住宅ローン一括比較（無料）</a>
+      <a class="affiliate-link outline" href="#" onclick="return false;">ネット銀行で審査（無料）</a>
+      <!-- ▲▲▲ アフィリエイトリンク ▲▲▲ -->
+    </div>
+    <p style="font-size:.72rem;color:var(--gray-500);margin-top:8px;">※当サイトはアフィリエイトプログラムに参加しています。</p>
+  </div>
+
+  <div class="ad-slot">広告スペース</div>
+
+  <div class="card" style="margin-bottom:24px;">
+    <h2>住宅ローンの返済方式と繰り上げ返済</h2>
+    <div style="font-size:.88rem;color:var(--gray-700);line-height:1.9;">
+      <p><strong>元利均等返済：</strong>毎月の返済額が一定。初期は利息の割合が多く、後半になるほど元金が多くなる。計画が立てやすい。</p>
+      <p style="margin-top:8px;"><strong>元金均等返済：</strong>毎月の元金返済額が一定。初期の返済額は高いが、総利息は元利均等より少なくなる。</p>
+      <p style="margin-top:8px;"><strong>繰り上げ返済：</strong>余裕資金を元金に充てることで利息を大幅に削減できます。「期間短縮型」の方が利息削減効果は大きいのが一般的です。</p>
+    </div>
+  </div>
+
+  <p class="disclaimer">⚠️ 本計算機の結果はあくまで目安です。実際の返済額は金融機関の審査結果・金利優遇などによって異なります。正確な情報は各金融機関にご確認ください。</p>
+</div>
+
+<footer>
+  <div class="container">
+    <div class="links">
+      <a href="index.html">トップ</a>
+      <a href="nisa.html">新NISA</a>
+      <a href="furusato.html">ふるさと納税</a>
+      <a href="loan.html">住宅ローン</a>
+      <a href="tax.html">副業税金</a>
+      <a href="privacy.html">プライバシーポリシー</a>
+    </div>
+    <p>© 2026 マネーツールズ — 計算結果は参考値です。</p>
+  </div>
+</footer>
+
+<script>
+const fmtMan = n => {
+  if (n >= 1e8) return (n/1e8).toFixed(2)+'億円';
+  if (n >= 1e4) return (n/1e4).toFixed(1)+'万円';
+  return Math.round(n).toLocaleString()+'円';
+};
+const fmtYM = months => {
+  const y = Math.floor(months / 12);
+  const m = months % 12;
+  return y > 0 ? (m > 0 ? `${y}年${m}ヶ月` : `${y}年`) : `${m}ヶ月`;
+};
+
+function sync(iId, rId, lId, fmt) {
+  const inp = document.getElementById(iId), rng = document.getElementById(rId), lbl = document.getElementById(lId);
+  const upd = v => lbl.textContent = fmt(v);
+  inp.addEventListener('input', () => { rng.value = inp.value; upd(inp.value); calc(); });
+  rng.addEventListener('input', () => { inp.value = rng.value; upd(rng.value); calc(); });
+  upd(inp.value);
+}
+sync('amount', 'amount_r', 'amount_rv', v => Number(v).toLocaleString()+'万円');
+sync('rate',   'rate_r',   'rate_rv',   v => v+'%');
+sync('years',  'years_r',  'years_rv',  v => v+'年');
+['method','prepay','prepay_timing','prepay_type'].forEach(id =>
+  document.getElementById(id).addEventListener('input', calc)
+);
+
+function calcEqualPayment(principal, annualRate, months) {
+  const r = annualRate / 12;
+  if (r === 0) return { monthly: principal / months, schedule: [] };
+  const monthly = principal * r * Math.pow(1+r, months) / (Math.pow(1+r, months) - 1);
+  let balance = principal;
+  const schedule = [];
+  for (let m = 1; m <= months; m++) {
+    const interest = balance * r;
+    const principalPart = monthly - interest;
+    balance -= principalPart;
+    schedule.push({ month: m, principal: principalPart, interest, balance: Math.max(0, balance) });
+  }
+  return { monthly, schedule };
+}
+
+function calcEqualPrincipal(principal, annualRate, months) {
+  const r = annualRate / 12;
+  const principalPart = principal / months;
+  let balance = principal;
+  const schedule = [];
+  for (let m = 1; m <= months; m++) {
+    const interest = balance * r;
+    const monthly = principalPart + interest;
+    balance -= principalPart;
+    schedule.push({ month: m, principal: principalPart, interest, monthly, balance: Math.max(0, balance) });
+  }
+  return { monthly: schedule[0]?.monthly || 0, schedule };
+}
+
+function calc() {
+  const amountMan  = parseFloat(document.getElementById('amount').value) || 0;
+  const principal  = amountMan * 10000;
+  const annualRate = parseFloat(document.getElementById('rate').value) / 100;
+  const years      = parseInt(document.getElementById('years').value) || 0;
+  const months     = years * 12;
+  const method     = document.getElementById('method').value;
+  const prepayMan  = parseFloat(document.getElementById('prepay').value) || 0;
+  const prepay     = prepayMan * 10000;
+  const prepayT    = parseInt(document.getElementById('prepay_timing').value) || 0;
+  const prepayType = document.getElementById('prepay_type').value;
+
+  const { monthly, schedule } = method === 'equal_payment'
+    ? calcEqualPayment(principal, annualRate, months)
+    : calcEqualPrincipal(principal, annualRate, months);
+
+  const totalInterest = schedule.reduce((s, r) => s + r.interest, 0);
+  const totalPayment  = principal + totalInterest;
+
+  document.getElementById('r_monthly').textContent  = method === 'equal_payment'
+    ? fmtMan(monthly) : fmtMan(monthly)+'〜';
+  document.getElementById('r_total').textContent    = fmtMan(totalPayment);
+  document.getElementById('r_interest').textContent = fmtMan(totalInterest);
+  document.getElementById('r_ratio').textContent    = ((totalInterest / totalPayment) * 100).toFixed(1) + '%';
+
+  if (method === 'equal_principal') {
+    document.getElementById('r_first_payment').textContent =
+      `初回返済額：${fmtMan(schedule[0]?.monthly || 0)} → 最終：${fmtMan(schedule[schedule.length-1]?.monthly || 0)}`;
+  } else {
+    document.getElementById('r_first_payment').textContent = '';
+  }
+
+  // 繰り上げ返済効果
+  if (prepay > 0 && prepayT < years) {
+    const prepayMonth = prepayT * 12;
+    const balanceAtPrepay = schedule[prepayMonth - 1]?.balance || 0;
+    const newPrincipal = Math.max(0, balanceAtPrepay - prepay);
+
+    if (prepayType === 'shorten') {
+      // 期間短縮：同じ月額で残りを再計算
+      const r = annualRate / 12;
+      let rem = 0;
+      if (r > 0) {
+        rem = Math.ceil(Math.log(monthly / (monthly - newPrincipal * r)) / Math.log(1 + r));
+      } else {
+        rem = Math.ceil(newPrincipal / monthly);
+      }
+      const newTotal = months - (months - prepayMonth - rem);
+      const shortenMonths = (months - prepayMonth) - rem;
+      const { schedule: newSched } = calcEqualPayment(newPrincipal, annualRate, rem);
+      const newInterest = schedule.slice(0, prepayMonth).reduce((s,r) => s+r.interest, 0)
+                        + newSched.reduce((s,r) => s+r.interest, 0);
+      const save = totalInterest - newInterest;
+
+      document.getElementById('r_prepay_label').textContent  = '短縮期間';
+      document.getElementById('r_prepay_effect').textContent = fmtYM(Math.max(0, shortenMonths));
+      document.getElementById('r_prepay_save').textContent   = fmtMan(Math.max(0, save));
+    } else {
+      // 返済額軽減型
+      const remMonths = months - prepayMonth;
+      const { monthly: newMonthly, schedule: newSched } = calcEqualPayment(newPrincipal, annualRate, remMonths);
+      const newInterest = schedule.slice(0, prepayMonth).reduce((s,r) => s+r.interest, 0)
+                        + newSched.reduce((s,r) => s+r.interest, 0);
+      const save = totalInterest - newInterest;
+
+      document.getElementById('r_prepay_label').textContent  = '月額削減';
+      document.getElementById('r_prepay_effect').textContent = fmtMan(monthly - newMonthly)+'/月';
+      document.getElementById('r_prepay_save').textContent   = fmtMan(Math.max(0, save));
+    }
+    document.getElementById('prepay_result').style.display = 'block';
+  } else {
+    document.getElementById('prepay_result').style.display = 'none';
+  }
+
+  drawChart(schedule);
+}
+
+function drawChart(schedule) {
+  const canvas = document.getElementById('chart');
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.clientWidth - 48;
+  const H = 220;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  // 年次データに集約
+  const yearly = [];
+  for (let y = 1; y <= Math.ceil(schedule.length / 12); y++) {
+    const slice = schedule.slice((y-1)*12, y*12);
+    yearly.push({
+      y,
+      principal: slice.reduce((s,r) => s+r.principal, 0),
+      interest:  slice.reduce((s,r) => s+r.interest, 0),
+    });
+  }
+
+  const pad = { top:20, right:20, bottom:36, left:72 };
+  const cw = W - pad.left - pad.right;
+  const ch = H - pad.top - pad.bottom;
+  const maxVal = Math.max(...yearly.map(d => d.principal + d.interest), 1);
+  const bw = Math.max(2, cw / yearly.length - 1);
+
+  // グリッド
+  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+  [0, .25, .5, .75, 1].forEach(t => {
+    const y = pad.top + ch * (1-t);
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left+cw, y); ctx.stroke();
+    ctx.fillStyle = '#94a3b8'; ctx.font = '11px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(fmtMan(maxVal*t), pad.left-4, y+4);
+  });
+
+  yearly.forEach((d, i) => {
+    const x = pad.left + i * (cw / yearly.length);
+    const hP = (d.principal / maxVal) * ch;
+    const hI = (d.interest  / maxVal) * ch;
+    ctx.fillStyle = '#1d4ed8';
+    ctx.fillRect(x, pad.top+ch-hP-hI, bw, hP);
+    ctx.fillStyle = '#fca5a5';
+    ctx.fillRect(x, pad.top+ch-hI, bw, hI);
+    if (i % Math.ceil(yearly.length/8) === 0 || i === yearly.length-1) {
+      ctx.fillStyle = '#94a3b8'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(d.y+'年', x+bw/2, H-10);
+    }
+  });
+
+  // 凡例
+  [[1,'#1d4ed8','元金'],[1,'#fca5a5','利息']].forEach(([,col,lbl],k) => {
+    const lx = pad.left + cw - 120 + k*60;
+    ctx.fillStyle = col; ctx.fillRect(lx, pad.top+8, 14, 10);
+    ctx.fillStyle = '#334155'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText(lbl, lx+18, pad.top+17);
+  });
+}
+
+calc();
+window.addEventListener('resize', calc);
+</script>
+</body>
+</html>

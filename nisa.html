@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新NISAシミュレーター 2024年版 | マネーツールズ</title>
+  <meta name="description" content="新NISAの積立シミュレーター。月々の積立額・運用期間・利回りを入力するだけで将来の資産額と節税効果を自動計算。つみたて投資枠・成長投資枠に対応。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <!-- AdSense: 審査通過後に貼る -->
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a class="logo" href="index.html">💹 マネーツールズ</a>
+    <nav>
+      <a href="nisa.html" style="background:rgba(255,255,255,.2);color:#fff">新NISA</a>
+      <a href="furusato.html">ふるさと納税</a>
+      <a href="loan.html">住宅ローン</a>
+      <a href="tax.html">副業税金</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-hero">
+  <div class="container">
+    <p class="breadcrumb"><a href="index.html">トップ</a> &rsaquo; 新NISAシミュレーター</p>
+    <h1>📈 新NISAシミュレーター</h1>
+    <p>積立額・年数・利回りを入力するだけ。将来の資産額と節税効果を瞬時に計算します。</p>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="calc-layout" style="margin-top:28px;">
+
+    <!-- 入力 -->
+    <div class="card">
+      <h2>⚙️ 条件を入力</h2>
+
+      <div class="field">
+        <label>月々の積立額</label>
+        <div class="input-wrap">
+          <input type="number" id="monthly" value="30000" min="100" max="300000" step="1000">
+          <span class="unit">円/月</span>
+        </div>
+        <div class="range-row">
+          <input type="range" id="monthly_r" min="1000" max="300000" step="1000" value="30000">
+          <span class="range-val" id="monthly_rv">3万円</span>
+        </div>
+        <p class="hint">つみたて投資枠 上限：月10万円（年120万円）</p>
+      </div>
+
+      <div class="field">
+        <label>積立期間</label>
+        <div class="input-wrap">
+          <input type="number" id="years" value="20" min="1" max="40" step="1">
+          <span class="unit">年</span>
+        </div>
+        <div class="range-row">
+          <input type="range" id="years_r" min="1" max="40" step="1" value="20">
+          <span class="range-val" id="years_rv">20年</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>期待利回り（年率）</label>
+        <div class="input-wrap">
+          <input type="number" id="rate" value="5" min="0.1" max="20" step="0.1">
+          <span class="unit">%</span>
+        </div>
+        <div class="range-row">
+          <input type="range" id="rate_r" min="0.1" max="15" step="0.1" value="5">
+          <span class="range-val" id="rate_rv">5%</span>
+        </div>
+        <p class="hint">参考：全世界株式インデックスの長期平均 約5〜7%</p>
+      </div>
+
+      <div class="field">
+        <label>投資枠の種別</label>
+        <div class="input-wrap">
+          <select id="nisa_type" class="no-unit" style="padding-right:12px">
+            <option value="tsumitate">つみたて投資枠のみ</option>
+            <option value="growth">成長投資枠のみ</option>
+            <option value="both" selected>両方（フル活用）</option>
+          </select>
+        </div>
+      </div>
+
+      <p class="disclaimer" style="margin-top:8px;">
+        新NISA非課税保有限度額：1,800万円（成長投資枠は1,200万円まで）
+      </p>
+    </div>
+
+    <!-- 結果 -->
+    <div class="card">
+      <h2>📊 試算結果</h2>
+      <div class="result-list">
+        <div class="result-item">
+          <span class="label">元本合計</span>
+          <span class="value" id="r_principal">—</span>
+        </div>
+        <div class="result-item">
+          <span class="label">運用益（税引前）</span>
+          <span class="value green" id="r_gain">—</span>
+        </div>
+        <div class="result-item">
+          <span class="label">通常口座なら課税額（20.315%）</span>
+          <span class="value" id="r_tax">—</span>
+        </div>
+      </div>
+
+      <div class="result-highlight" style="margin-top:16px;">
+        <span class="label">NISA 資産総額</span>
+        <span class="value" id="r_total">—</span>
+      </div>
+
+      <div class="tax-saving" id="r_saving">
+        💚 節税効果：計算中...
+      </div>
+
+      <div class="result-item mt-8" style="border-bottom:none;padding-top:8px;">
+        <span class="label" style="font-size:.8rem;">非課税枠の使用率</span>
+        <span class="value" id="r_limit" style="font-size:1rem;">—</span>
+      </div>
+      <div style="height:8px;background:var(--gray-100);border-radius:99px;margin-top:4px;overflow:hidden;">
+        <div id="r_limitbar" style="height:100%;background:var(--blue);border-radius:99px;width:0%;transition:width .4s;"></div>
+      </div>
+    </div>
+
+    <!-- チャート（full width） -->
+    <div class="chart-wrap full-width">
+      <h2>資産推移グラフ</h2>
+      <canvas id="chart"></canvas>
+    </div>
+
+  </div>
+
+  <!-- アフィリエイト -->
+  <div class="affiliate-box">
+    <h3>💡 新NISAを始めるなら手数料0円の証券口座がおすすめ</h3>
+    <p>口座開設・維持費は無料。インデックスファンドの購入手数料も0円の主要ネット証券で始めましょう。</p>
+    <div class="affiliate-links">
+      <!-- ▼▼▼ アフィリエイトリンクをここに貼る（例：A8.net / ValueCommerce の発行URL） ▼▼▼ -->
+      <a class="affiliate-link" href="#" onclick="return false;">SBI証券で口座開設（無料）</a>
+      <a class="affiliate-link outline" href="#" onclick="return false;">楽天証券で口座開設（無料）</a>
+      <a class="affiliate-link outline" href="#" onclick="return false;">マネックス証券（無料）</a>
+      <!-- ▲▲▲ アフィリエイトリンク ▲▲▲ -->
+    </div>
+    <p style="font-size:.72rem;color:var(--gray-500);margin-top:8px;">※当サイトはアフィリエイトプログラムに参加しています。リンク経由で口座開設された場合、当サイトに報酬が発生します。</p>
+  </div>
+
+  <!-- AdSense スロット -->
+  <div class="ad-slot">広告スペース</div>
+
+  <!-- 説明コンテンツ（SEO） -->
+  <div class="card" style="margin-bottom:24px;">
+    <h2>新NISAとは？シミュレーターの使い方</h2>
+    <div style="font-size:.88rem;color:var(--gray-700);line-height:1.9;">
+      <p>新NISAは2024年から始まった恒久的な少額投資非課税制度です。通常、投資で得た利益には約20%の税金がかかりますが、NISA口座内の利益はすべて非課税になります。</p>
+      <p style="margin-top:10px;"><strong>シミュレーターの使い方：</strong></p>
+      <ol style="margin-left:1.2em;margin-top:4px;">
+        <li>「月々の積立額」を設定します（上限：つみたて枠 月10万円）</li>
+        <li>「積立期間」を設定します（1〜40年）</li>
+        <li>「期待利回り」を入力します（参考：全世界株式の長期平均 約5〜7%）</li>
+        <li>結果が自動で更新されます</li>
+      </ol>
+      <p style="margin-top:10px;"><strong>節税効果について：</strong> NISA口座では運用益にかかる約20.315%の税金が0円になります。長期積立ほど節税額が大きくなります。</p>
+    </div>
+  </div>
+
+  <p class="disclaimer">
+    ⚠️ 本シミュレーターの結果は将来を保証するものではありません。投資は元本割れのリスクがあります。利回りは一定ではなく、実際の運用結果は異なります。投資判断はご自身の責任でお願いします。
+  </p>
+
+</div>
+
+<footer>
+  <div class="container">
+    <div class="links">
+      <a href="index.html">トップ</a>
+      <a href="nisa.html">新NISA</a>
+      <a href="furusato.html">ふるさと納税</a>
+      <a href="loan.html">住宅ローン</a>
+      <a href="tax.html">副業税金</a>
+      <a href="privacy.html">プライバシーポリシー</a>
+    </div>
+    <p>© 2026 マネーツールズ — 計算結果は参考値です。正確な情報は各公的機関にご確認ください。</p>
+  </div>
+</footer>
+
+<script>
+// ===== ユーティリティ =====
+const fmt = n => Math.round(n).toLocaleString('ja-JP') + '円';
+const fmtMan = n => {
+  if (n >= 1e8) return (n/1e8).toFixed(1) + '億円';
+  if (n >= 1e4) return (n/1e4).toFixed(1) + '万円';
+  return Math.round(n).toLocaleString() + '円';
+};
+
+// スライダー連動
+function syncSlider(inputId, rangeId, labelId, formatFn) {
+  const inp = document.getElementById(inputId);
+  const rng = document.getElementById(rangeId);
+  const lbl = document.getElementById(labelId);
+  const update = (v) => { lbl.textContent = formatFn(v); };
+  inp.addEventListener('input', () => { rng.value = inp.value; update(inp.value); calc(); });
+  rng.addEventListener('input', () => { inp.value = rng.value; update(rng.value); calc(); });
+  update(inp.value);
+}
+
+syncSlider('monthly', 'monthly_r', 'monthly_rv', v => v >= 10000 ? (v/10000).toFixed(1)+'万円' : v+'円');
+syncSlider('years',   'years_r',   'years_rv',   v => v+'年');
+syncSlider('rate',    'rate_r',    'rate_rv',    v => v+'%');
+document.getElementById('nisa_type').addEventListener('change', calc);
+
+// ===== 計算 =====
+function calc() {
+  const monthly = parseFloat(document.getElementById('monthly').value) || 0;
+  const years   = parseInt(document.getElementById('years').value) || 0;
+  const rate    = parseFloat(document.getElementById('rate').value) / 100 / 12;
+  const months  = years * 12;
+
+  // 複利計算（毎月末積立）
+  let total = 0;
+  const yearlyData = [];
+  for (let m = 1; m <= months; m++) {
+    total = (total + monthly) * (1 + rate);
+    if (m % 12 === 0) yearlyData.push({ y: m/12, val: total, principal: monthly * m });
+  }
+
+  const principal = monthly * months;
+  const gain      = total - principal;
+  const normalTax = gain * 0.20315;
+  const limit     = 1800_0000;
+  const usePct    = Math.min(100, (total / limit) * 100);
+
+  document.getElementById('r_principal').textContent = fmtMan(principal);
+  document.getElementById('r_gain').textContent      = fmtMan(gain);
+  document.getElementById('r_tax').textContent       = fmtMan(normalTax);
+  document.getElementById('r_total').textContent     = fmtMan(total);
+  document.getElementById('r_saving').textContent    = `💚 節税効果：約${fmtMan(normalTax)}（通常口座との差額）`;
+  document.getElementById('r_limit').textContent     = `${usePct.toFixed(1)}%`;
+  document.getElementById('r_limitbar').style.width  = usePct + '%';
+
+  drawChart(yearlyData);
+}
+
+// ===== チャート（Canvas） =====
+function drawChart(data) {
+  const canvas = document.getElementById('chart');
+  const dpr    = window.devicePixelRatio || 1;
+  const W      = canvas.parentElement.clientWidth - 48;
+  const H      = 220;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const pad = { top: 20, right: 20, bottom: 36, left: 70 };
+  const cw = W - pad.left - pad.right;
+  const ch = H - pad.top  - pad.bottom;
+
+  const maxVal = Math.max(...data.map(d => d.val), 1);
+  const xScale = i  => pad.left + (i / (data.length - 1 || 1)) * cw;
+  const yScale = v  => pad.top  + ch - (v / maxVal) * ch;
+
+  // 背景グリッド
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth = 1;
+  [0, .25, .5, .75, 1].forEach(t => {
+    const y = pad.top + ch * (1 - t);
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cw, y); ctx.stroke();
+    ctx.fillStyle = '#94a3b8'; ctx.font = '11px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(fmtMan(maxVal * t), pad.left - 6, y + 4);
+  });
+
+  // 元本エリア
+  ctx.beginPath();
+  ctx.moveTo(xScale(0), yScale(data[0]?.principal || 0));
+  data.forEach((d, i) => ctx.lineTo(xScale(i), yScale(d.principal)));
+  ctx.lineTo(xScale(data.length - 1), yScale(0));
+  ctx.lineTo(xScale(0), yScale(0));
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(219,234,254,.6)';
+  ctx.fill();
+
+  // 資産総額エリア
+  ctx.beginPath();
+  ctx.moveTo(xScale(0), yScale(data[0]?.val || 0));
+  data.forEach((d, i) => ctx.lineTo(xScale(i), yScale(d.val)));
+  ctx.lineTo(xScale(data.length - 1), yScale(data[data.length-1]?.principal || 0));
+  data.slice().reverse().forEach((d, i) => ctx.lineTo(xScale(data.length - 1 - i), yScale(d.principal)));
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(209,250,229,.7)';
+  ctx.fill();
+
+  // 資産総額ライン
+  ctx.beginPath();
+  data.forEach((d, i) => i === 0 ? ctx.moveTo(xScale(i), yScale(d.val)) : ctx.lineTo(xScale(i), yScale(d.val)));
+  ctx.strokeStyle = '#059669'; ctx.lineWidth = 2.5; ctx.stroke();
+
+  // 元本ライン
+  ctx.beginPath();
+  data.forEach((d, i) => i === 0 ? ctx.moveTo(xScale(i), yScale(d.principal)) : ctx.lineTo(xScale(i), yScale(d.principal)));
+  ctx.strokeStyle = '#1d4ed8'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // X軸ラベル
+  ctx.fillStyle = '#94a3b8'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+  const step = data.length <= 10 ? 1 : Math.ceil(data.length / 8);
+  data.forEach((d, i) => {
+    if (i % step === 0 || i === data.length - 1) {
+      ctx.fillText(d.y + '年', xScale(i), H - 10);
+    }
+  });
+
+  // 凡例
+  const lx = pad.left + cw - 160;
+  [[1.5, '#059669', '資産総額'], [1, '#1d4ed8', '元本']].forEach(([lw, col, lbl], k) => {
+    const ly = pad.top + 12 + k * 18;
+    ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.beginPath();
+    ctx.moveTo(lx, ly); ctx.lineTo(lx + 22, ly); ctx.stroke();
+    ctx.fillStyle = '#334155'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText(lbl, lx + 28, ly + 4);
+  });
+}
+
+calc();
+window.addEventListener('resize', calc);
+</script>
+
+</body>
+</html>

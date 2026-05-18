@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ふるさと納税 控除上限額計算機 2024年版 | マネーツールズ</title>
+  <meta name="description" content="ふるさと納税の控除上限額を年収・家族構成から簡単計算。実質負担2,000円でどれだけ節税できるか一目瞭然。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a class="logo" href="index.html">💹 マネーツールズ</a>
+    <nav>
+      <a href="nisa.html">新NISA</a>
+      <a href="furusato.html" style="background:rgba(255,255,255,.2);color:#fff">ふるさと納税</a>
+      <a href="loan.html">住宅ローン</a>
+      <a href="tax.html">副業税金</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-hero">
+  <div class="container">
+    <p class="breadcrumb"><a href="index.html">トップ</a> &rsaquo; ふるさと納税 控除上限額計算機</p>
+    <h1>🗾 ふるさと納税 控除上限額計算機</h1>
+    <p>年収と家族構成を入力するだけ。実質2,000円の負担でお得になる上限額を即計算。</p>
+  </div>
+</div>
+
+<div class="container">
+  <div class="calc-layout" style="margin-top:28px;">
+
+    <!-- 入力 -->
+    <div class="card">
+      <h2>⚙️ 条件を入力</h2>
+
+      <div class="field">
+        <label>給与収入（年収）</label>
+        <div class="input-wrap">
+          <input type="number" id="income" value="500" min="100" max="5000" step="10">
+          <span class="unit">万円</span>
+        </div>
+        <div class="range-row">
+          <input type="range" id="income_r" min="100" max="2000" step="10" value="500">
+          <span class="range-val" id="income_rv">500万円</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>家族構成</label>
+        <div class="input-wrap">
+          <select id="family" class="no-unit" style="padding-right:12px">
+            <option value="single">独身・共働き（配偶者控除なし）</option>
+            <option value="married">配偶者あり（専業主婦/夫）</option>
+            <option value="child1">配偶者あり＋子1人（高校生以下）</option>
+            <option value="child2">配偶者あり＋子2人（高校生以下）</option>
+            <option value="child3">配偶者あり＋子3人（高校生以下）</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>住宅ローン控除（年間）</label>
+        <div class="input-wrap">
+          <input type="number" id="mortgage" value="0" min="0" max="50" step="1">
+          <span class="unit">万円</span>
+        </div>
+        <p class="hint">住宅ローン控除を受けている場合は入力してください（なければ0）</p>
+      </div>
+
+      <div class="field">
+        <label>ワンストップ特例制度を利用する？</label>
+        <div class="input-wrap">
+          <select id="onestop" class="no-unit" style="padding-right:12px">
+            <option value="yes" selected>はい（確定申告不要・5自治体以内）</option>
+            <option value="no">いいえ（確定申告する）</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 結果 -->
+    <div class="card">
+      <h2>📊 試算結果</h2>
+
+      <div class="result-highlight">
+        <span class="label">寄付の上限目安</span>
+        <span class="value" id="r_limit">—</span>
+      </div>
+
+      <div class="result-list" style="margin-top:16px;">
+        <div class="result-item">
+          <span class="label">実質自己負担額</span>
+          <span class="value">2,000円</span>
+        </div>
+        <div class="result-item">
+          <span class="label">節税・還付される金額（目安）</span>
+          <span class="value green" id="r_saving">—</span>
+        </div>
+        <div class="result-item">
+          <span class="label">所得税還付（目安）</span>
+          <span class="value" id="r_income_tax">—</span>
+        </div>
+        <div class="result-item">
+          <span class="label">住民税控除（目安）</span>
+          <span class="value" id="r_resident_tax">—</span>
+        </div>
+      </div>
+
+      <div class="tax-saving" id="r_message">計算中...</div>
+
+      <p class="disclaimer" style="margin-top:12px;">
+        ※この計算は給与所得のみの場合の目安です。副業・不動産所得がある場合は異なります。
+      </p>
+    </div>
+
+    <!-- 表（full width） -->
+    <div class="card full-width">
+      <h2>📋 年収別・上限額早見表（独身・共働きの場合）</h2>
+      <div style="overflow-x:auto;">
+        <table id="ref_table" style="width:100%;border-collapse:collapse;font-size:.85rem;">
+          <thead>
+            <tr style="background:var(--blue);color:#fff;">
+              <th style="padding:8px 12px;text-align:left;">年収</th>
+              <th style="padding:8px 12px;text-align:right;">上限目安</th>
+              <th style="padding:8px 12px;text-align:right;">節税額目安</th>
+            </tr>
+          </thead>
+          <tbody id="table_body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- アフィリエイト -->
+  <div class="affiliate-box">
+    <h3>🎁 ふるさと納税はこちらのサイトがおすすめ</h3>
+    <p>ポイント還元や返礼品の充実度で選ぶなら大手ポータルサイトが便利です。</p>
+    <div class="affiliate-links">
+      <!-- ▼▼▼ アフィリエイトリンクをここに貼る ▼▼▼ -->
+      <a class="affiliate-link" href="#" onclick="return false;">さとふる（公式）</a>
+      <a class="affiliate-link outline" href="#" onclick="return false;">ふるさとチョイス</a>
+      <a class="affiliate-link outline" href="#" onclick="return false;">楽天ふるさと納税</a>
+      <!-- ▲▲▲ アフィリエイトリンク ▲▲▲ -->
+    </div>
+    <p style="font-size:.72rem;color:var(--gray-500);margin-top:8px;">※当サイトはアフィリエイトプログラムに参加しています。</p>
+  </div>
+
+  <div class="ad-slot">広告スペース</div>
+
+  <div class="card" style="margin-bottom:24px;">
+    <h2>ふるさと納税の仕組みと計算方法</h2>
+    <div style="font-size:.88rem;color:var(--gray-700);line-height:1.9;">
+      <p>ふるさと納税は、応援したい自治体に寄付をすると、寄付額から2,000円を引いた金額が所得税・住民税から控除される制度です。さらに寄付のお礼として返礼品がもらえます。</p>
+      <p style="margin-top:10px;"><strong>控除の仕組み：</strong></p>
+      <ul style="margin-left:1.2em;margin-top:4px;">
+        <li>所得税：寄付額×所得税率分が還付</li>
+        <li>住民税（基本分）：寄付額×10%が控除</li>
+        <li>住民税（特例分）：残額が控除（上限：住民税額の20%）</li>
+      </ul>
+      <p style="margin-top:10px;">上限を超えた寄付は自己負担になるため、計算機で目安を確認してから寄付することをおすすめします。</p>
+    </div>
+  </div>
+
+  <p class="disclaimer">⚠️ 本計算機の結果はあくまで目安です。正確な控除額は税務署または各ふるさと納税ポータルサイトの計算ツールでご確認ください。</p>
+</div>
+
+<footer>
+  <div class="container">
+    <div class="links">
+      <a href="index.html">トップ</a>
+      <a href="nisa.html">新NISA</a>
+      <a href="furusato.html">ふるさと納税</a>
+      <a href="loan.html">住宅ローン</a>
+      <a href="tax.html">副業税金</a>
+      <a href="privacy.html">プライバシーポリシー</a>
+    </div>
+    <p>© 2026 マネーツールズ — 計算結果は参考値です。</p>
+  </div>
+</footer>
+
+<script>
+const fmtMan = n => n >= 10000 ? (n/10000).toFixed(1)+'万円' : Math.round(n).toLocaleString()+'円';
+
+// 給与所得控除（簡略版）
+function salaryDeduction(income) {
+  if (income <= 162.5) return 55;
+  if (income <= 180)   return income * 0.4 - 10;
+  if (income <= 360)   return income * 0.3 + 8;
+  if (income <= 660)   return income * 0.2 + 44;
+  if (income <= 850)   return income * 0.1 + 110;
+  return 195;
+}
+
+// 基礎控除
+const basicDeduction = 48;
+
+// 所得税率
+function incomeTaxRate(taxableIncome) {
+  if (taxableIncome <= 195)  return 0.05;
+  if (taxableIncome <= 330)  return 0.10;
+  if (taxableIncome <= 695)  return 0.20;
+  if (taxableIncome <= 900)  return 0.23;
+  if (taxableIncome <= 1800) return 0.33;
+  if (taxableIncome <= 4000) return 0.40;
+  return 0.45;
+}
+
+// 配偶者・扶養控除の所得税分（簡略）
+function dependentDeduction(family) {
+  switch(family) {
+    case 'single':  return 0;
+    case 'married': return 38;
+    case 'child1':  return 38 + 38;
+    case 'child2':  return 38 + 38 * 2;
+    case 'child3':  return 38 + 38 * 3;
+    default: return 0;
+  }
+}
+
+// 住民税の扶養控除（家族構成別）
+function residentDependentDeduction(family) {
+  switch(family) {
+    case 'single':  return 0;
+    case 'married': return 33;
+    case 'child1':  return 33 + 33;
+    case 'child2':  return 33 + 33 * 2;
+    case 'child3':  return 33 + 33 * 3;
+    default: return 0;
+  }
+}
+
+function calcLimit(incomeMan, family, mortgageMan) {
+  const income = incomeMan;
+  const salDed = salaryDeduction(income);
+  const depDed = dependentDeduction(family);
+  const taxableIncome = Math.max(0, income - salDed - basicDeduction - depDed);
+  const taxRate = incomeTaxRate(taxableIncome);
+
+  // 住民税課税所得
+  const residentDed = residentDependentDeduction(family);
+  const residentTaxable = Math.max(0, income - salDed - 43 - residentDed); // 住民税基礎控除43万
+  const residentTax = residentTaxable * 0.10 * 10000; // 円
+
+  // ふるさと納税上限の逆算
+  // 上限 = (住民税所得割 × 0.2) / (0.9 - 所得税率 × 1.021) + 2000
+  const denominator = 0.9 - taxRate * 1.021;
+  if (denominator <= 0) return { limit: 0, incomeTaxSave: 0, residentSave: 0 };
+
+  const limitCircle = Math.floor((residentTax * 0.2) / denominator + 2000);
+
+  // 住宅ローン控除があれば所得税が減るため上限が下がる可能性がある
+  // （簡略：住民税特例分のみで計算）
+  const actualLimit = mortgageMan > 0
+    ? Math.max(2000, Math.floor(residentTax * 0.2 / 0.79 + 2000))
+    : limitCircle;
+
+  const donation = Math.max(0, actualLimit - 2000);
+  const incomeTaxSave = Math.floor(donation * taxRate * 1.021);
+  const residentSave  = donation - incomeTaxSave;
+
+  return { limit: actualLimit, incomeTaxSave, residentSave };
+}
+
+function sync(inputId, rangeId, labelId) {
+  const inp = document.getElementById(inputId);
+  const rng = document.getElementById(rangeId);
+  const lbl = document.getElementById(labelId);
+  inp.addEventListener('input', () => { rng.value = inp.value; lbl.textContent = inp.value+'万円'; calc(); });
+  rng.addEventListener('input', () => { inp.value = rng.value; lbl.textContent = rng.value+'万円'; calc(); });
+}
+sync('income', 'income_r', 'income_rv');
+document.getElementById('family').addEventListener('change', calc);
+document.getElementById('mortgage').addEventListener('input', calc);
+document.getElementById('onestop').addEventListener('change', calc);
+
+function calc() {
+  const income   = parseFloat(document.getElementById('income').value) || 0;
+  const family   = document.getElementById('family').value;
+  const mortgage = parseFloat(document.getElementById('mortgage').value) || 0;
+
+  const { limit, incomeTaxSave, residentSave } = calcLimit(income, family, mortgage);
+  const totalSave = limit - 2000;
+
+  document.getElementById('r_limit').textContent        = fmtMan(limit);
+  document.getElementById('r_saving').textContent       = fmtMan(totalSave);
+  document.getElementById('r_income_tax').textContent   = fmtMan(incomeTaxSave);
+  document.getElementById('r_resident_tax').textContent = fmtMan(residentSave);
+  document.getElementById('r_message').textContent      =
+    `💡 上限 ${fmtMan(limit)} まで寄付すると、実質負担は2,000円で ${fmtMan(totalSave)} 分お得になります。`;
+
+  buildTable();
+}
+
+function buildTable() {
+  const family = document.getElementById('family').value;
+  const rows = [300, 400, 500, 600, 700, 800, 1000, 1200, 1500, 2000];
+  const tbody = document.getElementById('table_body');
+  tbody.innerHTML = rows.map((inc, i) => {
+    const { limit } = calcLimit(inc, 'single', 0);
+    const save = limit - 2000;
+    const bg = i % 2 === 0 ? '#f8fafc' : '#fff';
+    return `<tr style="background:${bg};">
+      <td style="padding:7px 12px;">${inc}万円</td>
+      <td style="padding:7px 12px;text-align:right;font-weight:600;">${fmtMan(limit)}</td>
+      <td style="padding:7px 12px;text-align:right;color:var(--green);">${fmtMan(save)}</td>
+    </tr>`;
+  }).join('');
+}
+
+calc();
+</script>
+</body>
+</html>

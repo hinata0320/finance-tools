@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>副業・フリーランス税金計算機 確定申告判定付き | マネーツールズ</title>
+  <meta name="description" content="副業・フリーランスの税金を簡単計算。本業年収と副業収入を入力するだけで所得税・住民税・手取り額・確定申告の要否を自動判定。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a class="logo" href="index.html">💹 マネーツールズ</a>
+    <nav>
+      <a href="nisa.html">新NISA</a>
+      <a href="furusato.html">ふるさと納税</a>
+      <a href="loan.html">住宅ローン</a>
+      <a href="tax.html" style="background:rgba(255,255,255,.2);color:#fff">副業税金</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-hero">
+  <div class="container">
+    <p class="breadcrumb"><a href="index.html">トップ</a> &rsaquo; 副業・フリーランス税金計算機</p>
+    <h1>💼 副業・フリーランス税金計算機</h1>
+    <p>本業＋副業の収入を入力するだけ。納税額の目安・手取り額・確定申告の要否を自動判定します。</p>
+  </div>
+</div>
+
+<div class="container">
+  <div class="calc-layout" style="margin-top:28px;">
+
+    <!-- 入力 -->
+    <div class="card">
+      <h2>⚙️ 条件を入力</h2>
+
+      <div class="field">
+        <label>本業の年収（給与収入）</label>
+        <div class="input-wrap">
+          <input type="number" id="main_income" value="400" min="0" max="5000" step="10">
+          <span class="unit">万円</span>
+        </div>
+        <div class="range-row">
+          <input type="range" id="main_r" min="0" max="2000" step="10" value="400">
+          <span class="range-val" id="main_rv">400万円</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>副業・フリーランス収入（年間）</label>
+        <div class="input-wrap">
+          <input type="number" id="side_income" value="100" min="0" max="2000" step="10">
+          <span class="unit">万円</span>
+        </div>
+        <div class="range-row">
+          <input type="range" id="side_r" min="0" max="500" step="5" value="100">
+          <span class="range-val" id="side_rv">100万円</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>副業の経費（年間）</label>
+        <div class="input-wrap">
+          <input type="number" id="expense" value="20" min="0" max="2000" step="5">
+          <span class="unit">万円</span>
+        </div>
+        <p class="hint">PC・通信費・書籍代など業務に必要な費用。収入から差し引けます。</p>
+      </div>
+
+      <div class="field">
+        <label>副業の種類</label>
+        <div class="input-wrap">
+          <select id="side_type" class="no-unit" style="padding-right:12px">
+            <option value="jigyo" selected>事業所得・雑所得（フリーランス・ネット収益など）</option>
+            <option value="fudosan">不動産所得</option>
+            <option value="kyuyo">給与所得（アルバイトなど）</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>青色申告を利用する？</label>
+        <div class="input-wrap">
+          <select id="aoshiro" class="no-unit" style="padding-right:12px">
+            <option value="65" selected>青色申告（65万円控除）</option>
+            <option value="10">青色申告（10万円控除）</option>
+            <option value="0">白色申告・未定</option>
+          </select>
+        </div>
+        <p class="hint">青色申告65万円控除は複式簿記＋e-Tax申告が条件</p>
+      </div>
+    </div>
+
+    <!-- 結果 -->
+    <div class="card">
+      <h2>📊 試算結果</h2>
+
+      <!-- 確定申告判定 -->
+      <div id="kakutei_box" style="border-radius:8px;padding:12px 16px;margin-bottom:16px;font-weight:600;font-size:.9rem;"></div>
+
+      <div class="result-highlight">
+        <span class="label">副業の手取り（目安）</span>
+        <span class="value" id="r_net">—</span>
+      </div>
+
+      <div class="result-list" style="margin-top:16px;">
+        <div class="result-item">
+          <span class="label">副業の課税所得</span>
+          <span class="value" id="r_taxable">—</span>
+        </div>
+        <div class="result-item">
+          <span class="label">追加所得税（目安）</span>
+          <span class="value" style="color:#dc2626;" id="r_income_tax">—</span>
+        </div>
+        <div class="result-item">
+          <span class="label">追加住民税（目安）</span>
+          <span class="value" style="color:#dc2626;" id="r_resident_tax">—</span>
+        </div>
+        <div class="result-item">
+          <span class="label">合計税負担</span>
+          <span class="value" style="color:#dc2626;" id="r_total_tax">—</span>
+        </div>
+        <div class="result-item">
+          <span class="label">実効税率</span>
+          <span class="value" id="r_effective_rate">—</span>
+        </div>
+      </div>
+
+      <div class="tax-saving" id="r_aoshiro_message" style="display:none;"></div>
+    </div>
+
+    <!-- 早見表（full width） -->
+    <div class="card full-width">
+      <h2>📋 副業所得別・税額早見表（本業400万円・経費なし・白色の場合）</h2>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:.84rem;">
+          <thead>
+            <tr style="background:var(--blue);color:#fff;">
+              <th style="padding:8px 12px;text-align:left;">副業収入</th>
+              <th style="padding:8px 12px;text-align:right;">追加所得税</th>
+              <th style="padding:8px 12px;text-align:right;">追加住民税</th>
+              <th style="padding:8px 12px;text-align:right;">手取り</th>
+            </tr>
+          </thead>
+          <tbody id="ref_table"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- アフィリエイト -->
+  <div class="affiliate-box">
+    <h3>📝 確定申告・青色申告をかんたんに</h3>
+    <p>副業・フリーランスの確定申告は会計ソフトを使えば大幅に楽になります。</p>
+    <div class="affiliate-links">
+      <!-- ▼▼▼ アフィリエイトリンクをここに貼る ▼▼▼ -->
+      <a class="affiliate-link" href="#" onclick="return false;">freee 無料で始める</a>
+      <a class="affiliate-link outline" href="#" onclick="return false;">マネーフォワード クラウド</a>
+      <a class="affiliate-link outline" href="#" onclick="return false;">やよいの青色申告</a>
+      <!-- ▲▲▲ アフィリエイトリンク ▲▲▲ -->
+    </div>
+    <p style="font-size:.72rem;color:var(--gray-500);margin-top:8px;">※当サイトはアフィリエイトプログラムに参加しています。</p>
+  </div>
+
+  <div class="ad-slot">広告スペース</div>
+
+  <div class="card" style="margin-bottom:24px;">
+    <h2>副業の税金の仕組み</h2>
+    <div style="font-size:.88rem;color:var(--gray-700);line-height:1.9;">
+      <p><strong>確定申告が必要な条件：</strong>給与所得者で副業の所得（収入−経費）が年間20万円を超える場合は確定申告が必要です。</p>
+      <p style="margin-top:8px;"><strong>青色申告の節税効果：</strong>青色申告特別控除（最大65万円）を使うと、課税所得を大幅に減らせます。freeeやマネーフォワードなどの会計ソフトを使えば、複式簿記も比較的かんたんに対応できます。</p>
+      <p style="margin-top:8px;"><strong>住民税の注意点：</strong>副業収入に応じた住民税は翌年6月から増額されます。会社に副業がバレやすいのがこのタイミングです。住民税を自分で納付（普通徴収）に切り替えることで対応できます。</p>
+    </div>
+  </div>
+
+  <p class="disclaimer">⚠️ 本計算機は給与所得者が副業をした場合の概算を示すものです。社会保険料・各種控除の詳細は個人の状況によって異なります。正確な税額は税理士または税務署にご確認ください。</p>
+</div>
+
+<footer>
+  <div class="container">
+    <div class="links">
+      <a href="index.html">トップ</a>
+      <a href="nisa.html">新NISA</a>
+      <a href="furusato.html">ふるさと納税</a>
+      <a href="loan.html">住宅ローン</a>
+      <a href="tax.html">副業税金</a>
+      <a href="privacy.html">プライバシーポリシー</a>
+    </div>
+    <p>© 2026 マネーツールズ — 計算結果は参考値です。</p>
+  </div>
+</footer>
+
+<script>
+const fmtMan = n => n >= 10000 ? (n/10000).toFixed(1)+'万円' : Math.round(n).toLocaleString()+'円';
+
+function salaryDeduction(income) {
+  if (income <= 162.5) return 55;
+  if (income <= 180)   return income * 0.4 - 10;
+  if (income <= 360)   return income * 0.3 + 8;
+  if (income <= 660)   return income * 0.2 + 44;
+  if (income <= 850)   return income * 0.1 + 110;
+  return 195;
+}
+
+function incomeTaxRate(taxableIncome) {
+  if (taxableIncome <= 195)  return { rate: 0.05, deduct: 0 };
+  if (taxableIncome <= 330)  return { rate: 0.10, deduct: 9.75 };
+  if (taxableIncome <= 695)  return { rate: 0.20, deduct: 42.75 };
+  if (taxableIncome <= 900)  return { rate: 0.23, deduct: 63.6 };
+  if (taxableIncome <= 1800) return { rate: 0.33, deduct: 153.6 };
+  if (taxableIncome <= 4000) return { rate: 0.40, deduct: 279.6 };
+  return { rate: 0.45, deduct: 479.6 };
+}
+
+function calcTax(mainIncomeMan, sideIncomeMan, expenseMan, aoshiro, sideType) {
+  const basic = 48; // 基礎控除
+  const salDed = salaryDeduction(mainIncomeMan);
+  const mainTaxable = Math.max(0, mainIncomeMan - salDed - basic);
+
+  // 副業の所得
+  let aoshiroDeduct = 0;
+  if (sideType === 'jigyo') aoshiroDeduct = parseInt(aoshiro);
+  const sideIncome = Math.max(0, sideIncomeMan - expenseMan - aoshiroDeduct / 10000 * 0); // 万円単位で後処理
+  const sideIncomeCircle = Math.max(0, (sideIncomeMan - expenseMan) * 10000 - aoshiroDeduct * 10000);
+  const sideIncomeMan2 = sideIncomeCircle / 10000;
+
+  // 本業のみの所得税
+  const { rate: r1, deduct: d1 } = incomeTaxRate(mainTaxable);
+  const mainOnlyTax = Math.max(0, mainTaxable * r1 - d1) * 1.021;
+
+  // 本業＋副業の所得税
+  const totalTaxable = mainTaxable + sideIncomeMan2;
+  const { rate: r2, deduct: d2 } = incomeTaxRate(totalTaxable);
+  const totalTax = Math.max(0, totalTaxable * r2 - d2) * 1.021;
+
+  const additionalIncomeTax = Math.max(0, totalTax - mainOnlyTax) * 10000;
+
+  // 住民税（副業分のみ）
+  const additionalResidentTax = sideIncomeMan2 * 0.10 * 10000;
+
+  const totalAdditionalTax = additionalIncomeTax + additionalResidentTax;
+  const netSide = Math.max(0, sideIncomeCircle - totalAdditionalTax);
+  const effectiveRate = sideIncomeCircle > 0 ? (totalAdditionalTax / sideIncomeCircle * 100) : 0;
+
+  // 確定申告判定
+  const needKakutei = sideIncomeMan2 > 20;
+
+  return {
+    taxableSide: sideIncomeMan2,
+    additionalIncomeTax,
+    additionalResidentTax,
+    totalAdditionalTax,
+    netSide,
+    effectiveRate,
+    needKakutei,
+    aoshiroDeduct: parseInt(aoshiro),
+  };
+}
+
+function sync(iId, rId, lId, fmt) {
+  const inp = document.getElementById(iId), rng = document.getElementById(rId), lbl = document.getElementById(lId);
+  inp.addEventListener('input', () => { rng.value = inp.value; lbl.textContent = fmt(inp.value); calc(); });
+  rng.addEventListener('input', () => { inp.value = rng.value; lbl.textContent = fmt(rng.value); calc(); });
+}
+sync('main_income', 'main_r', 'main_rv', v => v+'万円');
+sync('side_income', 'side_r', 'side_rv', v => v+'万円');
+['expense','side_type','aoshiro'].forEach(id => document.getElementById(id).addEventListener('input', calc));
+
+function calc() {
+  const main    = parseFloat(document.getElementById('main_income').value) || 0;
+  const side    = parseFloat(document.getElementById('side_income').value) || 0;
+  const expense = parseFloat(document.getElementById('expense').value) || 0;
+  const aoshiro = document.getElementById('aoshiro').value;
+  const sideType = document.getElementById('side_type').value;
+
+  const res = calcTax(main, side, expense, aoshiro, sideType);
+
+  // 確定申告判定
+  const box = document.getElementById('kakutei_box');
+  if (side === 0) {
+    box.style.background = 'var(--gray-100)';
+    box.style.color = 'var(--gray-500)';
+    box.textContent = '副業収入を入力してください';
+  } else if (res.needKakutei) {
+    box.style.background = '#fef2f2';
+    box.style.color = '#dc2626';
+    box.textContent = '⚠️ 確定申告が必要です（副業所得が20万円超）';
+  } else {
+    box.style.background = 'var(--green-lt)';
+    box.style.color = 'var(--green)';
+    box.textContent = '✅ 確定申告不要（副業所得が20万円以下）※住民税申告は必要な場合あり';
+  }
+
+  document.getElementById('r_taxable').textContent      = fmtMan(res.taxableSide * 10000);
+  document.getElementById('r_income_tax').textContent   = fmtMan(res.additionalIncomeTax);
+  document.getElementById('r_resident_tax').textContent = fmtMan(res.additionalResidentTax);
+  document.getElementById('r_total_tax').textContent    = fmtMan(res.totalAdditionalTax);
+  document.getElementById('r_net').textContent          = fmtMan(res.netSide);
+  document.getElementById('r_effective_rate').textContent = res.effectiveRate.toFixed(1) + '%';
+
+  const aoshiroMsg = document.getElementById('r_aoshiro_message');
+  if (parseInt(aoshiro) > 0 && sideType === 'jigyo') {
+    aoshiroMsg.style.display = 'block';
+    aoshiroMsg.textContent = `💚 青色申告控除（${aoshiro}万円）により課税所得を圧縮中。白色申告より節税できています。`;
+  } else {
+    aoshiroMsg.style.display = 'none';
+  }
+
+  buildTable();
+}
+
+function buildTable() {
+  const rows = [20, 50, 100, 150, 200, 300, 500];
+  const tbody = document.getElementById('ref_table');
+  tbody.innerHTML = rows.map((s, i) => {
+    const res = calcTax(400, s, 0, '0', 'jigyo');
+    const bg = i % 2 === 0 ? '#f8fafc' : '#fff';
+    return `<tr style="background:${bg};">
+      <td style="padding:7px 12px;">${s}万円</td>
+      <td style="padding:7px 12px;text-align:right;color:#dc2626;">${fmtMan(res.additionalIncomeTax)}</td>
+      <td style="padding:7px 12px;text-align:right;color:#dc2626;">${fmtMan(res.additionalResidentTax)}</td>
+      <td style="padding:7px 12px;text-align:right;font-weight:600;color:var(--green);">${fmtMan(res.netSide)}</td>
+    </tr>`;
+  }).join('');
+}
+
+calc();
+</script>
+</body>
+</html>
