@@ -205,13 +205,7 @@
     }
     .txn-group .txn-item { border-radius: 0; box-shadow: none; }
     .txn-group .txn-item:last-child { border-bottom: none; }
-    .txn-icon {
-      width: 38px; height: 38px; border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 17px; flex-shrink: 0;
-    }
-    .txn-icon.income { background: #dcfce7; }
-    .txn-icon.expense { background: var(--gray-100); }
+    .txn-icon { /* kept for legacy refs, actual styles via app-icon */ }
     .txn-info { flex: 1; min-width: 0; }
     .txn-desc { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .txn-meta { font-size: 11px; color: var(--gray-400); margin-top: 1px; }
@@ -220,6 +214,13 @@
     .txn-amount.expense { color: #f43f5e; }
     .txn-delete { color: var(--gray-300); cursor: pointer; font-size: 16px; padding: 4px; flex-shrink: 0; }
     .txn-delete:hover { color: var(--danger); }
+
+    /* ── App Icon base (brand logos & category icons) ── */
+    .app-icon {
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; line-height: 1; letter-spacing: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans JP', sans-serif;
+    }
 
     /* ── Subscription Cards ── */
     .sub-grid { background: white; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
@@ -231,11 +232,7 @@
     }
     .sub-card:last-child { border-bottom: none; }
     .sub-card.inactive { opacity: .5; }
-    .sub-icon {
-      width: 44px; height: 44px; border-radius: 14px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px; flex-shrink: 0;
-    }
+    .sub-icon { /* styles via app-icon */ }
     .sub-info { flex: 1; min-width: 0; }
     .sub-name { font-weight: 700; font-size: 14px; }
     .sub-meta { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
@@ -378,7 +375,7 @@
       padding: 10px 0; border-bottom: 1px solid var(--gray-100);
     }
     .upcoming-item:last-child { border-bottom: none; }
-    .upcoming-icon { width: 36px; height: 36px; border-radius: 12px; background: var(--gray-100); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .upcoming-icon { /* styles via app-icon */ }
     .upcoming-info { flex: 1; min-width: 0; }
     .upcoming-name { font-weight: 600; font-size: 13px; }
     .upcoming-date { font-size: 11px; color: var(--gray-400); margin-top: 1px; display: flex; align-items: center; gap: 5px; }
@@ -994,9 +991,77 @@ const TXN_CATEGORIES = {
 };
 
 const CHART_COLORS = [
-  '#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6',
+  '#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6',
   '#06b6d4','#f97316','#84cc16','#ec4899','#64748b'
 ];
+
+// ブランドアイコン定義: キーワード(小文字) → { bg, fg, text, fs, fw }
+const SERVICE_BRAND_ICONS = [
+  { k:'netflix',      bg:'#E50914', fg:'#fff', t:'N',    fs:'20px', fw:'900' },
+  { k:'spotify',      bg:'#1DB954', fg:'#fff', t:'♫',   fs:'17px', fw:'700' },
+  { k:'amazon prime', bg:'#00A8E0', fg:'#fff', t:'a',    fs:'20px', fw:'700', it:true },
+  { k:'youtube',      bg:'#FF0000', fg:'#fff', t:'▶',   fs:'15px', fw:'700' },
+  { k:'apple tv',     bg:'#000',    fg:'#fff', t:'TV',   fs:'12px', fw:'700' },
+  { k:'apple music',  bg:'#FC3C44', fg:'#fff', t:'♪',   fs:'17px', fw:'700' },
+  { k:'disney',       bg:'#113CCF', fg:'#fff', t:'D',    fs:'20px', fw:'900', it:true },
+  { k:'hulu',         bg:'#3DBB3D', fg:'#fff', t:'h',    fs:'20px', fw:'900' },
+  { k:'u-next',       bg:'#232323', fg:'#fff', t:'U',    fs:'18px', fw:'900' },
+  { k:'unext',        bg:'#232323', fg:'#fff', t:'U',    fs:'18px', fw:'900' },
+  { k:'dazn',         bg:'#F7F300', fg:'#000', t:'D',    fs:'18px', fw:'900' },
+  { k:'nintendo',     bg:'#E4000F', fg:'#fff', t:'N',    fs:'18px', fw:'900' },
+  { k:'playstation',  bg:'#003087', fg:'#fff', t:'PS',   fs:'13px', fw:'700' },
+  { k:'xbox',         bg:'#107C10', fg:'#fff', t:'X',    fs:'20px', fw:'900' },
+  { k:'line music',   bg:'#06C755', fg:'#fff', t:'L',    fs:'20px', fw:'900' },
+  { k:'line',         bg:'#06C755', fg:'#fff', t:'L',    fs:'20px', fw:'900' },
+  { k:'adobe',        bg:'#FA0F00', fg:'#fff', t:'Ai',   fs:'13px', fw:'700' },
+  { k:'lightroom',    bg:'#31A8FF', fg:'#fff', t:'Lr',   fs:'13px', fw:'700' },
+  { k:'photoshop',    bg:'#31A8FF', fg:'#fff', t:'Ps',   fs:'13px', fw:'700' },
+  { k:'canva',        bg:'#00C4CC', fg:'#fff', t:'C',    fs:'19px', fw:'700' },
+  { k:'notion',       bg:'#000',    fg:'#fff', t:'N',    fs:'18px', fw:'700' },
+  { k:'chatgpt',      bg:'#10A37F', fg:'#fff', t:'G',    fs:'18px', fw:'700' },
+  { k:'openai',       bg:'#10A37F', fg:'#fff', t:'AI',   fs:'13px', fw:'700' },
+  { k:'google one',   bg:'#4285F4', fg:'#fff', t:'G',    fs:'20px', fw:'700' },
+  { k:'microsoft 365',bg:'#0078D4', fg:'#fff', t:'M',    fs:'18px', fw:'700' },
+  { k:'office',       bg:'#D83B01', fg:'#fff', t:'O',    fs:'20px', fw:'700' },
+  { k:'dropbox',      bg:'#0061FF', fg:'#fff', t:'◻',   fs:'17px', fw:'700' },
+  { k:'icloud',       bg:'#3693F3', fg:'#fff', t:'☁',   fs:'17px', fw:'700' },
+  { k:'zoom',         bg:'#2D8CFF', fg:'#fff', t:'Z',    fs:'20px', fw:'700' },
+  { k:'slack',        bg:'#4A154B', fg:'#fff', t:'S',    fs:'20px', fw:'700' },
+  { k:'nhk',          bg:'#2A2A8B', fg:'#fff', t:'NHK',  fs:'11px', fw:'700' },
+  { k:'abema',        bg:'#00C896', fg:'#fff', t:'A',    fs:'20px', fw:'900' },
+  { k:'docomo',       bg:'#D50000', fg:'#fff', t:'d',    fs:'21px', fw:'900' },
+  { k:'rakuten',      bg:'#BF0000', fg:'#fff', t:'R',    fs:'20px', fw:'900' },
+  { k:'softbank',     bg:'#fff',    fg:'#000', t:'SB',   fs:'14px', fw:'700', bd:'1.5px solid #ddd' },
+  { k:'au ',          bg:'#EA5504', fg:'#fff', t:'au',   fs:'15px', fw:'700' },
+  { k:'evernote',     bg:'#00A82D', fg:'#fff', t:'E',    fs:'20px', fw:'700' },
+  { k:'figma',        bg:'#F24E1E', fg:'#fff', t:'F',    fs:'20px', fw:'700' },
+  { k:'github',       bg:'#24292E', fg:'#fff', t:'GH',   fs:'12px', fw:'700' },
+  { k:'kindle',       bg:'#232F3E', fg:'#fff', t:'K',    fs:'18px', fw:'700' },
+  { k:'audible',      bg:'#F5961E', fg:'#fff', t:'A',    fs:'20px', fw:'700' },
+  { k:'lemino',       bg:'#0097FF', fg:'#fff', t:'L',    fs:'20px', fw:'700' },
+  { k:'fod',          bg:'#E4007F', fg:'#fff', t:'F',    fs:'20px', fw:'700' },
+  { k:'paravi',       bg:'#0040AA', fg:'#fff', t:'P',    fs:'20px', fw:'700' },
+  { k:'d anime',      bg:'#E4007F', fg:'#fff', t:'dA',   fs:'13px', fw:'700' },
+];
+
+// トランザクションカテゴリのアイコン色
+const CAT_ICON_STYLE = {
+  food:         { bg:'#FF6B35', fg:'#fff' },
+  dining:       { bg:'#FF8C42', fg:'#fff' },
+  transport:    { bg:'#4ECDC4', fg:'#fff' },
+  utility:      { bg:'#FFD93D', fg:'#444' },
+  entertainment:{ bg:'#9B59B6', fg:'#fff' },
+  subscription: { bg:'#10B981', fg:'#fff' },
+  shopping:     { bg:'#E91E8C', fg:'#fff' },
+  health:       { bg:'#E74C3C', fg:'#fff' },
+  education:    { bg:'#3498DB', fg:'#fff' },
+  housing:      { bg:'#3498DB', fg:'#fff' },
+  salary:       { bg:'#10B981', fg:'#fff' },
+  bonus:        { bg:'#F59E0B', fg:'#fff' },
+  invest:       { bg:'#3B82F6', fg:'#fff' },
+  other_income: { bg:'#10B981', fg:'#fff' },
+  other:        { bg:'#9CA3AF', fg:'#fff' },
+};
 
 // =========================================================
 // DATA STORE
@@ -1399,6 +1464,29 @@ function getTxnCatIcon(id) {
 function getSubCatIcon(id) {
   return (SUB_CATEGORIES.find(c => c.id === id) || { icon: '📦' }).icon;
 }
+
+// サービス名からブランドアイコンHTMLを生成
+function renderServiceIcon(name, color, catId, size = 44) {
+  const n = name.toLowerCase();
+  const brand = SERVICE_BRAND_ICONS.find(b => n.includes(b.k));
+  const r = Math.round(size * 0.32);
+  if (brand) {
+    const bdStyle = brand.bd ? `border:${brand.bd};` : '';
+    const itStyle = brand.it ? 'font-style:italic;' : '';
+    return `<div class="app-icon" style="width:${size}px;height:${size}px;border-radius:${r}px;background:${brand.bg};color:${brand.fg};font-size:${brand.fs||'18px'};font-weight:${brand.fw||'700'};${bdStyle}${itStyle}">${brand.t}</div>`;
+  }
+  const emoji = getSubCatIcon(catId);
+  const bg = color ? color + '28' : '#f3f4f6';
+  return `<div class="app-icon" style="width:${size}px;height:${size}px;border-radius:${r}px;background:${bg};font-size:${size*0.5}px;">${emoji}</div>`;
+}
+
+// カテゴリIDからスタイル付きアイコンHTMLを生成
+function renderCatIcon(catId, type, size = 38) {
+  const emoji = getTxnCatIcon(catId);
+  const style = CAT_ICON_STYLE[catId] || (type === 'income' ? CAT_ICON_STYLE.salary : CAT_ICON_STYLE.other);
+  const r = Math.round(size * 0.32);
+  return `<div class="app-icon" style="width:${size}px;height:${size}px;border-radius:${r}px;background:${style.bg};color:${style.fg};font-size:${size*0.45}px;">${emoji}</div>`;
+}
 function getSubCatLabel(id) {
   return (SUB_CATEGORIES.find(c => c.id === id) || { label: 'その他' }).label;
 }
@@ -1634,7 +1722,7 @@ function renderDashboard() {
       const badgeClass = diffDays === 0 ? 'today' : diffDays <= 3 ? 'soon' : 'later';
       const badgeText  = diffDays === 0 ? '今日' : `${diffDays}日後`;
       return `<div class="upcoming-item">
-        <div class="upcoming-icon">${getSubCatIcon(sub.category)}</div>
+        ${renderServiceIcon(sub.name, sub.color, sub.category, 38)}
         <div class="upcoming-info">
           <div class="upcoming-name">${sub.name}</div>
           <div class="upcoming-date">
@@ -1663,7 +1751,7 @@ function renderDashboard() {
         return `<div class="cat-bar-item">
           <div class="cat-bar-header">
             <div class="cat-bar-label">
-              <span>${getTxnCatIcon(cat)}</span>
+              ${renderCatIcon(cat, 'expense', 24)}
               <span>${getTxnCatLabel(cat)}</span>
             </div>
             <div class="cat-bar-amount">${fmtYen(amt)}<span class="cat-bar-pct">${pct}%</span></div>
@@ -1689,12 +1777,11 @@ function renderDashboard() {
 }
 
 function renderTxnItem(t, showDelete = true) {
-  const icon = getTxnCatIcon(t.category);
-  const autoBadge = t.autoAdded ? '<span class="auto-badge">🔄 自動</span>' : '';
+  const autoBadge = t.autoAdded ? '<span class="auto-badge">自動</span>' : '';
   return `<div class="txn-item ${t.type}">
-    <div class="txn-icon ${t.type}">${icon}</div>
+    ${renderCatIcon(t.category, t.type)}
     <div class="txn-info">
-      <div class="txn-desc">${t.description} ${autoBadge}</div>
+      <div class="txn-desc">${t.description}${autoBadge ? ' ' + autoBadge : ''}</div>
       <div class="txn-meta">${fmtDate(t.date)} · ${getTxnCatLabel(t.category)}</div>
     </div>
     <div class="txn-amount ${t.type}">${t.type === 'income' ? '+' : '-'}${fmtYen(t.amount)}</div>
@@ -1822,7 +1909,7 @@ function renderSubs() {
     const cycleLabel = sub.cycle === 'monthly' ? '円/月' : '円/年';
 
     return `<div class="sub-card ${sub.active ? '' : 'inactive'}">
-      <div class="sub-icon" style="background:${sub.color}22;">${catIcon}</div>
+      ${renderServiceIcon(sub.name, sub.color, sub.category)}
       <div class="sub-info">
         <div class="sub-name">${sub.name}</div>
         <div class="sub-meta">${getSubCatLabel(sub.category)}</div>
