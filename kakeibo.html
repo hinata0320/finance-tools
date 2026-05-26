@@ -348,6 +348,38 @@
     }
     .filter-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
 
+    /* ── Spinner ── */
+    .spinner {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 3px solid var(--gray-200); border-top-color: var(--primary);
+      animation: spin .7s linear infinite; margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Email method cards ── */
+    .method-card {
+      border: 2px solid var(--gray-200); border-radius: var(--radius);
+      padding: 16px; cursor: pointer; transition: all .15s;
+      display: flex; align-items: flex-start; gap: 12px;
+    }
+    .method-card:hover { border-color: var(--primary); background: var(--primary-light); }
+    .method-card .method-icon { font-size: 28px; flex-shrink: 0; }
+    .method-card .method-title { font-weight: 700; font-size: 14px; margin-bottom: 3px; }
+    .method-card .method-desc { font-size: 12px; color: var(--gray-500); line-height: 1.5; }
+
+    /* ── Setup instructions ── */
+    .setup-step {
+      display: flex; gap: 10px; padding: 10px 0;
+      border-bottom: 1px solid var(--gray-100); font-size: 13px;
+    }
+    .setup-step:last-child { border-bottom: none; }
+    .step-num {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--primary); color: white;
+      font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+
     /* ── Suggest List (autocomplete) ── */
     .suggest-list {
       display: none; position: absolute; top: 100%; left: 0; right: 0;
@@ -464,6 +496,7 @@
     <div class="section-header">
       <div class="section-label">登録済みサブスク</div>
       <div style="display:flex;gap:6px;">
+        <button class="btn btn-outline btn-sm" onclick="openEmailModal()">📧 メール</button>
         <button class="btn btn-outline btn-sm" onclick="openCsvModal()">📄 CSV取込</button>
         <button class="btn btn-primary btn-sm" onclick="openSubModal()">+ 追加</button>
       </div>
@@ -586,6 +619,104 @@
       </div>
       <button class="btn btn-primary btn-full" type="submit">保存する</button>
     </form>
+  </div>
+</div>
+
+<!-- Email Modal -->
+<div class="modal-overlay" id="email-modal-overlay" onclick="closeEmailModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="email-modal-title">📧 メールからサブスク検出</div>
+      <button class="modal-close" onclick="closeEmailModal()">✕</button>
+    </div>
+
+    <!-- Step: Choose method -->
+    <div id="email-step-choose">
+      <p style="font-size:13px;color:var(--gray-500);margin-bottom:14px;">メール履歴を解析してサブスクの漏れを検出します。2つの方法から選んでください。</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="method-card" onclick="startGmailFlow()">
+          <div class="method-icon">🔵</div>
+          <div>
+            <div class="method-title">Gmail と連携（自動・推奨）</div>
+            <div class="method-desc">Googleアカウントで認証し、請求メールを自動スキャン。<br>初回のみGoogle Cloud設定が必要です。</div>
+          </div>
+        </div>
+        <div class="method-card" onclick="document.getElementById('eml-file-input').click()">
+          <div class="method-icon">📂</div>
+          <div>
+            <div class="method-title">.eml ファイルをアップロード</div>
+            <div class="method-desc">Gmailで請求メールを開き「メッセージをダウンロード」→ .eml ファイルを選択。設定不要で即使用可。</div>
+          </div>
+        </div>
+        <input type="file" id="eml-file-input" accept=".eml,.mbox,.txt" multiple style="display:none;" onchange="handleEmlFiles(event)">
+      </div>
+    </div>
+
+    <!-- Step: Gmail setup (Client ID entry) -->
+    <div id="email-step-setup" style="display:none;">
+      <div class="alert-banner warning" style="margin-bottom:14px;">
+        <div class="alert-icon">⚙️</div>
+        <div class="alert-body">
+          <div class="alert-title">初回設定：Google OAuth Client IDが必要です</div>
+          以下の手順でClient IDを取得してください（5分程度）
+        </div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div class="setup-step">
+          <div class="step-num">1</div>
+          <div><a href="https://console.cloud.google.com/" target="_blank" style="color:var(--primary);">Google Cloud Console</a> でプロジェクトを作成</div>
+        </div>
+        <div class="setup-step">
+          <div class="step-num">2</div>
+          <div>「APIとサービス」→「ライブラリ」→ <b>Gmail API</b> を有効化</div>
+        </div>
+        <div class="setup-step">
+          <div class="step-num">3</div>
+          <div>「認証情報」→「OAuth 2.0 クライアントID」を作成（タイプ：ウェブアプリケーション）</div>
+        </div>
+        <div class="setup-step">
+          <div class="step-num">4</div>
+          <div>「承認済みのJavaScript生成元」にこのページのURLを追加</div>
+        </div>
+        <div class="setup-step">
+          <div class="step-num">5</div>
+          <div>発行されたClient IDをここに貼り付ける</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Google OAuth Client ID</label>
+        <input class="form-control" id="gmail-client-id-input" placeholder="XXXXXXXX.apps.googleusercontent.com">
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline" style="flex:1;" onclick="showEmailStep('choose')">← 戻る</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="saveGmailClientId()">保存して接続</button>
+      </div>
+    </div>
+
+    <!-- Step: Loading -->
+    <div id="email-step-loading" style="display:none;text-align:center;padding:40px 0;">
+      <div class="spinner" style="margin-bottom:16px;"></div>
+      <div style="font-size:14px;color:var(--gray-500);" id="email-loading-text">メールを解析中…</div>
+    </div>
+
+    <!-- Step: Results -->
+    <div id="email-step-result" style="display:none;">
+      <div id="email-detect-summary" style="margin-bottom:12px;"></div>
+      <div id="email-candidate-list"></div>
+      <div style="margin-top:16px;display:flex;gap:8px;">
+        <button class="btn btn-outline" style="flex:1;" onclick="showEmailStep('choose')">← やり直す</button>
+        <button class="btn btn-primary" style="flex:1;" id="email-add-btn" onclick="addSelectedEmailSubs()">追加する</button>
+      </div>
+    </div>
+
+    <!-- Step: No results -->
+    <div id="email-step-empty" style="display:none;">
+      <div class="empty">
+        <div class="empty-icon">🔍</div>
+        <div class="empty-text">サブスクらしいメールが見つかりませんでした。<br>別の方法をお試しください。</div>
+      </div>
+      <button class="btn btn-outline btn-full" style="margin-top:12px;" onclick="showEmailStep('choose')">← 戻る</button>
+    </div>
   </div>
 </div>
 
@@ -1862,6 +1993,448 @@ function saveTransaction(e) {
   document.getElementById('txn-modal-overlay').classList.remove('open');
   renderLedger();
   renderDashboard();
+}
+
+// =========================================================
+// EMAIL: SENDER DOMAIN → SERVICE MAP
+// =========================================================
+const DOMAIN_TO_SERVICE = {
+  'netflix.com':         'Netflix（スタンダード）',
+  'email.netflix.com':   'Netflix（スタンダード）',
+  'spotify.com':         'Spotify Premium',
+  'email.spotify.com':   'Spotify Premium',
+  'amazon.co.jp':        'Amazon Prime Video',
+  'amazon.com':          'Amazon Prime Video',
+  'gc.apple.com':        'Apple Music（個人）',
+  'apple.com':           'Apple Music（個人）',
+  'hulu.com':            'Hulu',
+  'disneyplus.com':      'Disney+（月払い）',
+  'disney.co.jp':        'Disney+（月払い）',
+  'unext.co.jp':         'U-NEXT',
+  'abema.tv':            'ABEMA プレミアム',
+  'microsoft.com':       'Microsoft 365 Personal',
+  'adobe.com':           'Adobe Creative Cloud',
+  'adobeidentity.com':   'Adobe Creative Cloud',
+  'notion.so':           'Notion（Plus）',
+  'slack.com':           'Slack Pro',
+  'dropbox.com':         'Dropbox Plus',
+  'dropboxmail.com':     'Dropbox Plus',
+  'github.com':          'GitHub Copilot',
+  'openai.com':          'ChatGPT Plus',
+  'anthropic.com':       'Claude Pro',
+  'canva.com':           'Canva Pro',
+  'figma.com':           'Figma（Professional）',
+  'zoom.us':             'Zoom Pro',
+  'evernote.com':        'Evernote（Personal）',
+  'grammarly.com':       'Grammarly Premium',
+  'perplexity.ai':       'Perplexity Pro',
+  'nordvpn.com':         'NordVPN（月払い）',
+  'expressvpn.com':      'ExpressVPN',
+  'nintendo.com':        'Nintendo Switch Online（個人）',
+  'playstation.com':     'PlayStation Plus Essential',
+  'xbox.com':            'Xbox Game Pass Ultimate',
+  'kindle.com':          'Kindle Unlimited',
+  'amazon-ebooks.com':   'Kindle Unlimited',
+  'dazn.com':            'DAZN',
+  'youtube.com':         'YouTube Premium',
+  'noreply.youtube.com': 'YouTube Premium',
+  'music.youtube.com':   'YouTube Music Premium',
+  'rakuten.co.jp':       '楽天プレミアム',
+  'yahoo.co.jp':         'Yahoo!プレミアム',
+};
+
+// =========================================================
+// EMAIL MODAL CONTROL
+// =========================================================
+let emailCandidates = [];
+let gmailTokenClient = null;
+
+function openEmailModal() {
+  showEmailStep('choose');
+  document.getElementById('email-modal-overlay').classList.add('open');
+}
+
+function closeEmailModal(e) {
+  if (e && e.target !== document.getElementById('email-modal-overlay')) return;
+  document.getElementById('email-modal-overlay').classList.remove('open');
+}
+
+function showEmailStep(step) {
+  const steps = ['choose', 'setup', 'loading', 'result', 'empty'];
+  steps.forEach(s => {
+    const el = document.getElementById(`email-step-${s}`);
+    if (el) el.style.display = s === step ? '' : 'none';
+  });
+  const titles = {
+    choose: '📧 メールからサブスク検出',
+    setup:  '⚙️ Gmail 初回設定',
+    loading:'📧 メールを解析中…',
+    result: '📧 検出結果',
+    empty:  '📧 メールからサブスク検出',
+  };
+  document.getElementById('email-modal-title').textContent = titles[step] || '';
+}
+
+// =========================================================
+// GMAIL OAUTH
+// =========================================================
+function getStoredClientId() { return localStorage.getItem('gmail_client_id') || ''; }
+
+function startGmailFlow() {
+  const id = getStoredClientId();
+  if (!id) { showEmailStep('setup'); return; }
+  launchGmailOAuth(id);
+}
+
+function saveGmailClientId() {
+  const id = document.getElementById('gmail-client-id-input').value.trim();
+  if (!id || !id.includes('.apps.googleusercontent.com')) {
+    toast('⚠️ 正しいClient IDを入力してください');
+    return;
+  }
+  localStorage.setItem('gmail_client_id', id);
+  launchGmailOAuth(id);
+}
+
+function launchGmailOAuth(clientId) {
+  showEmailStep('loading');
+  document.getElementById('email-loading-text').textContent = 'Googleアカウントに接続中…';
+
+  const gsiLoaded = () => {
+    gmailTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: 'https://www.googleapis.com/auth/gmail.readonly',
+      callback: async (resp) => {
+        if (resp.error) {
+          toast('❌ Gmail認証エラー: ' + (resp.error_description || resp.error));
+          showEmailStep('choose');
+          return;
+        }
+        await fetchGmailMessages(resp.access_token);
+      },
+    });
+    gmailTokenClient.requestAccessToken({ prompt: 'consent' });
+  };
+
+  if (window.google?.accounts?.oauth2) {
+    gsiLoaded();
+  } else {
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.onload = gsiLoaded;
+    s.onerror = () => { toast('❌ Google認証ライブラリの読み込みに失敗しました'); showEmailStep('choose'); };
+    document.head.appendChild(s);
+  }
+}
+
+async function fetchGmailMessages(token) {
+  showEmailStep('loading');
+  document.getElementById('email-loading-text').textContent = 'メールを検索中…';
+  try {
+    const q = [
+      'subject:(利用明細 OR 請求 OR 課金 OR 引き落とし OR お支払い OR ご請求',
+      'OR payment OR billing OR invoice OR receipt OR subscription)',
+      'newer_than:12m',
+    ].join(' ');
+    const res = await fetch(
+      `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(q)}&maxResults=100`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const data = await res.json();
+    if (!data.messages?.length) { showEmailStep('empty'); return; }
+
+    document.getElementById('email-loading-text').textContent = `${data.messages.length}件のメールを解析中…`;
+
+    const limit = Math.min(data.messages.length, 50);
+    const msgs = await Promise.all(
+      data.messages.slice(0, limit).map(m => fetchOneGmailMessage(token, m.id))
+    );
+
+    const parsed = msgs.filter(Boolean).map(gmailMsgToEmail);
+    finishEmailParse(parsed, 'Gmail');
+  } catch (err) {
+    toast('❌ Gmail取得エラー: ' + err.message);
+    showEmailStep('choose');
+  }
+}
+
+async function fetchOneGmailMessage(token, id) {
+  try {
+    const res = await fetch(
+      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return await res.json();
+  } catch { return null; }
+}
+
+function gmailMsgToEmail(msg) {
+  const h = Object.fromEntries((msg.payload?.headers || []).map(x => [x.name.toLowerCase(), x.value]));
+  return {
+    from:    h['from'] || '',
+    subject: decodeEmailHeader(h['subject'] || ''),
+    date:    h['date'] || '',
+    body:    extractGmailBody(msg.payload),
+  };
+}
+
+function extractGmailBody(payload) {
+  if (!payload) return '';
+  const getB64 = (p) => {
+    if (!p) return '';
+    if (p.mimeType?.startsWith('text/') && p.body?.data) {
+      try { return atob(p.body.data.replace(/-/g, '+').replace(/_/g, '/')); } catch { return ''; }
+    }
+    return (p.parts || []).map(getB64).join('\n');
+  };
+  const raw = getB64(payload);
+  return raw.replace(/<[^>]+>/g, ' ').replace(/\s{2,}/g, ' ');
+}
+
+// =========================================================
+// EML FILE UPLOAD
+// =========================================================
+function handleEmlFiles(e) {
+  const files = [...e.target.files];
+  if (!files.length) return;
+  showEmailStep('loading');
+  document.getElementById('email-loading-text').textContent = `${files.length}件のファイルを解析中…`;
+
+  Promise.all(files.map(readAndParseEml)).then(results => {
+    finishEmailParse(results.flat().filter(Boolean), '.eml');
+  });
+}
+
+async function readAndParseEml(file) {
+  const buffer = await file.arrayBuffer();
+  let text = '';
+  for (const enc of ['utf-8', 'iso-2022-jp', 'shift-jis', 'euc-jp']) {
+    try { text = new TextDecoder(enc, { fatal: true }).decode(buffer); break; } catch {}
+  }
+  if (!text) text = new TextDecoder('utf-8', { fatal: false }).decode(buffer);
+  return parseEml(text);
+}
+
+function parseEml(raw) {
+  const lines = raw.split(/\r?\n/);
+  const headers = {};
+  let i = 0;
+  while (i < lines.length && lines[i] !== '') {
+    let line = lines[i];
+    // Handle folded headers
+    while (i + 1 < lines.length && /^[ \t]/.test(lines[i + 1])) { i++; line += ' ' + lines[i].trim(); }
+    const m = line.match(/^([^:]+):\s*(.*)/);
+    if (m) headers[m[1].toLowerCase()] = m[2];
+    i++;
+  }
+  const bodyLines = lines.slice(i + 1);
+
+  const ct = headers['content-type'] || '';
+  const bm = ct.match(/boundary="?([^";]+)"?/i);
+  let bodyText = '';
+
+  if (bm) {
+    const boundary = bm[1];
+    const parts = bodyLines.join('\n').split(new RegExp(`--${escapeRe(boundary)}`));
+    for (const part of parts) {
+      if (!part.includes('Content-Type:')) continue;
+      const [ph, ...pb] = part.split('\n\n');
+      const enc = (ph.match(/Content-Transfer-Encoding:\s*(\S+)/i) || [])[1] || '';
+      let partText = pb.join('\n\n');
+      if (enc.toLowerCase() === 'base64') {
+        try { partText = atob(partText.replace(/\s/g, '')); } catch {}
+      } else if (enc.toLowerCase() === 'quoted-printable') {
+        partText = decodeQP(partText);
+      }
+      // Prefer text/plain
+      if (ph.includes('text/plain')) { bodyText = partText; break; }
+      if (ph.includes('text/html') && !bodyText) bodyText = partText;
+    }
+  } else {
+    const enc = (headers['content-transfer-encoding'] || '').toLowerCase();
+    bodyText = bodyLines.join('\n');
+    if (enc === 'base64') { try { bodyText = atob(bodyText.replace(/\s/g, '')); } catch {} }
+    else if (enc === 'quoted-printable') { bodyText = decodeQP(bodyText); }
+  }
+
+  bodyText = bodyText.replace(/<[^>]+>/g, ' ').replace(/&[a-z#\d]+;/gi, ' ').replace(/\s{2,}/g, ' ');
+
+  return {
+    from:    headers['from'] || '',
+    subject: decodeEmailHeader(headers['subject'] || ''),
+    date:    headers['date'] || '',
+    body:    bodyText,
+  };
+}
+
+function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+function decodeQP(s) {
+  return s.replace(/=\r?\n/g, '').replace(/=([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+}
+
+function decodeEmailHeader(str) {
+  return str.replace(/=\?([^?]+)\?([BbQq])\?([^?]*)\?=/g, (_, charset, enc, data) => {
+    try {
+      if (enc.toUpperCase() === 'B') {
+        const bytes = Uint8Array.from(atob(data), c => c.charCodeAt(0));
+        return new TextDecoder(charset).decode(bytes);
+      }
+      return decodeQP(data.replace(/_/g, ' '));
+    } catch { return data; }
+  });
+}
+
+// =========================================================
+// EMAIL PARSING: EXTRACT SUBSCRIPTION INFO
+// =========================================================
+function finishEmailParse(emails, source) {
+  emailCandidates = parseEmailsForSubs(emails);
+  showEmailResults(emailCandidates, source, emails.length);
+}
+
+function parseEmailsForSubs(emails) {
+  const found = new Map();
+
+  emails.forEach(email => {
+    const fullText = `${email.subject} ${email.body}`;
+
+    // Extract amounts (¥1,490 or 1490円)
+    const amounts = [];
+    const amtRe = /[¥￥](\d{1,3}(?:,\d{3})*(?:\.\d+)?)|(\d{1,6})円/g;
+    let m;
+    while ((m = amtRe.exec(fullText)) !== null) {
+      const v = parseInt((m[1] || m[2]).replace(/[,，]/g, ''));
+      if (v >= 100 && v <= 100000) amounts.push(v);
+    }
+    if (!amounts.length) return;
+
+    // Identify service by sender domain
+    const domainMatch = email.from.match(/@([\w.\-]+)/);
+    const domain = domainMatch ? domainMatch[1].toLowerCase() : '';
+    const serviceNameByDomain = Object.entries(DOMAIN_TO_SERVICE).find(([d]) => domain === d || domain.endsWith('.' + d))?.[1];
+
+    // Identify by catalog name in subject/body
+    let catalogEntry = serviceNameByDomain
+      ? SUBSCRIPTION_CATALOG.find(c => c.name === serviceNameByDomain)
+      : SUBSCRIPTION_CATALOG.find(c => {
+          const base = c.name.split('（')[0].toLowerCase();
+          return base.length >= 4 && fullText.toLowerCase().includes(base);
+        });
+
+    // Filter out non-subscription mail (e.g. one-time purchases with unrecognized domain)
+    const subjectLC = email.subject.toLowerCase();
+    const isLikelySub = /利用明細|課金|サブスク|定期|月額|年額|会員|プレミアム|subscription|billing|invoice|renewal|monthly|annual|membership/.test(fullText.toLowerCase())
+      || !!serviceNameByDomain;
+    if (!isLikelySub) return;
+
+    const name     = catalogEntry ? catalogEntry.name : (serviceNameByDomain || cleanSubjectForName(email.subject) || domain);
+    const amount   = catalogEntry ? catalogEntry.amount : (amounts[0] || 0);
+    const cycle    = catalogEntry ? catalogEntry.cycle : guessEmailCycle(fullText);
+    const category = catalogEntry ? catalogEntry.category : guessCategoryFromDesc(name + ' ' + domain);
+
+    if (!name || amount === 0) return;
+
+    const key = catalogEntry ? catalogEntry.name : normalizeDesc(name) + '_' + amount;
+    if (found.has(key)) {
+      found.get(key).count++;
+    } else {
+      found.set(key, {
+        name, amount, cycle,
+        billingDay:   1,
+        billingMonth: 1,
+        category,
+        fromDomain: domain,
+        count: 1,
+        selected: true,
+      });
+    }
+  });
+
+  return [...found.values()]
+    .filter(s => s.amount > 0)
+    .sort((a, b) => b.count - a.count);
+}
+
+function cleanSubjectForName(subject) {
+  return subject
+    .replace(/re:|fwd:|fw:/gi, '')
+    .replace(/[【\[].+?[】\]]/g, '')
+    .replace(/(利用明細|請求|お知らせ|のご案内|ご請求|明細書|領収書)/g, '')
+    .trim()
+    .slice(0, 30);
+}
+
+function guessEmailCycle(text) {
+  if (/年額|年間|annually|annual|yearly|per year/.test(text)) return 'yearly';
+  return 'monthly';
+}
+
+function showEmailResults(candidates, source, emailCount) {
+  const summary = document.getElementById('email-detect-summary');
+  if (!candidates.length) { showEmailStep('empty'); return; }
+
+  showEmailStep('result');
+  summary.innerHTML = `
+    <div class="alert-banner success">
+      <div class="alert-icon">🔍</div>
+      <div class="alert-body">
+        <div class="alert-title">${candidates.length}件のサブスクを検出</div>
+        ${source}の${emailCount}件のメールを解析しました。追加したい項目を選んでください。
+      </div>
+    </div>`;
+
+  renderEmailCandidates();
+}
+
+function renderEmailCandidates() {
+  document.getElementById('email-candidate-list').innerHTML = emailCandidates.map((c, i) => `
+    <div class="csv-candidate-item ${c.selected ? 'selected' : ''}" onclick="toggleEmailCandidate(${i})">
+      <div style="font-size:22px;width:36px;text-align:center;flex-shrink:0;">${getSubCatIcon(c.category)}</div>
+      <div class="csv-candidate-info">
+        <div class="csv-candidate-name">${c.name}</div>
+        <div class="csv-candidate-meta">
+          ${getSubCatLabel(c.category)} · ${c.count}通のメールで確認
+          ${c.fromDomain ? ` · ${c.fromDomain}` : ''}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+        <div class="csv-candidate-amount">${fmtYen(c.amount)}<span style="font-size:11px;color:var(--gray-400);">/${c.cycle === 'monthly' ? '月' : '年'}</span></div>
+        <div style="width:22px;height:22px;border-radius:50%;border:2px solid ${c.selected ? 'var(--primary)' : 'var(--gray-300)'};
+          background:${c.selected ? 'var(--primary)' : 'white'};
+          display:flex;align-items:center;justify-content:center;color:white;font-size:12px;">
+          ${c.selected ? '✓' : ''}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleEmailCandidate(idx) {
+  emailCandidates[idx].selected = !emailCandidates[idx].selected;
+  renderEmailCandidates();
+}
+
+function addSelectedEmailSubs() {
+  const selected = emailCandidates.filter(c => c.selected);
+  if (!selected.length) { toast('⚠️ 追加する項目を選択してください'); return; }
+
+  const colors = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316'];
+  let added = 0;
+  selected.forEach(c => {
+    if (DB.subs.find(s => s.name === c.name)) return;
+    DB.addSub({
+      id: uuid(), name: c.name, amount: c.amount,
+      cycle: c.cycle, billingDay: c.billingDay, billingMonth: c.billingMonth,
+      category: c.category, color: colors[DB.subs.length % colors.length],
+      trialEndDate: null, active: true, createdAt: today(),
+    });
+    added++;
+  });
+
+  DB.save();
+  toast(`✅ ${added}件のサブスクを追加しました`);
+  document.getElementById('email-modal-overlay').classList.remove('open');
+  renderSubs();
 }
 
 // =========================================================
