@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /googlecc672dbf1fce54aa.html
+
+Sitemap: https://hinata0320.github.io/finance-tools/sitemap.xml

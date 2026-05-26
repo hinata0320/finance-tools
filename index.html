@@ -6,8 +6,12 @@
   <title>マネーツールズ | 無料の金融計算機まとめ</title>
   <meta name="description" content="新NISAシミュレーター・ふるさと納税計算機・住宅ローン計算機・副業税金計算機を無料で提供。広告なしで快適に使えるシンプルな金融ツール集です。">
   <meta property="og:title" content="マネーツールズ | 無料の金融計算機まとめ">
-  <meta property="og:description" content="新NISA・ふるさと納税・住宅ローン・副業税金を無料で計算。スマホ対応、登録不要。">
+  <meta property="og:description" content="新NISA・ふるさと納税・住宅ローン・副業税金・家計簿＆サブスク管理を無料で計算。スマホ対応、登録不要。">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://hinata0320.github.io/finance-tools/">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
@@ -41,6 +45,7 @@
       <a href="furusato.html">ふるさと納税</a>
       <a href="loan.html">住宅ローン</a>
       <a href="tax.html">副業税金</a>
+      <a href="kakeibo.html">家計簿</a>
     </nav>
   </div>
 </header>
@@ -50,7 +55,7 @@
     <h1>お金の計算を、もっとシンプルに</h1>
     <p>新NISA・ふるさと納税・住宅ローン・副業税金をわかりやすく計算。<br>登録不要・完全無料・広告少なめ</p>
     <div class="stat-bar">
-      <div class="stat"><div class="num">4</div><div class="lbl">種類のツール</div></div>
+      <div class="stat"><div class="num">5</div><div class="lbl">種類のツール</div></div>
       <div class="stat"><div class="num">0円</div><div class="lbl">完全無料</div></div>
       <div class="stat"><div class="num">登録不要</div><div class="lbl">すぐ使える</div></div>
     </div>
@@ -96,6 +101,13 @@
       <span class="badge">確定申告判定付</span>
     </a>
 
+    <a class="tool-card" href="kakeibo.html">
+      <div class="icon">💰</div>
+      <h2>家計簿 &amp;<br>サブスク管理</h2>
+      <p>サブスク自動追加・引き落とし日リマインダー・カテゴリ別グラフで支出を見える化</p>
+      <span class="badge">サブスク自動追加</span>
+    </a>
+
   </div>
 
   <div class="disclaimer">
@@ -112,11 +124,17 @@
       <a href="furusato.html">ふるさと納税</a>
       <a href="loan.html">住宅ローン</a>
       <a href="tax.html">副業税金</a>
+      <a href="kakeibo.html">家計簿</a>
       <a href="privacy.html">プライバシーポリシー</a>
     </div>
     <p>© 2026 マネーツールズ — 計算結果は参考値です。正確な情報は各公的機関にご確認ください。</p>
   </div>
 </footer>
 
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+</script>
 </body>
 </html>
