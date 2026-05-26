@@ -4,7 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>家計簿 & サブスク管理 | マネーツールズ</title>
-  <meta name="description" content="サブスク自動管理・家計簿・グラフで支出を見える化。登録不要、完全無料。">
+  <meta name="description" content="サブスク自動追加・引き落とし日リマインダー・カテゴリ別グラフで家計を見える化。登録不要、完全無料。データはブラウザ内に保存。">
+  <meta property="og:title" content="家計簿 & サブスク管理 | マネーツールズ">
+  <meta property="og:description" content="サブスク自動追加・引き落とし日リマインダー・カテゴリ別グラフで家計を見える化。登録不要、完全無料。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://hinata0320.github.io/finance-tools/kakeibo.html">
+  <meta name="theme-color" content="#6366f1">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -2452,6 +2459,10 @@ function init() {
 }
 
 init();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
 </script>
 </body>
 </html>

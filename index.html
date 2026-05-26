@@ -6,8 +6,12 @@
   <title>マネーツールズ | 無料の金融計算機まとめ</title>
   <meta name="description" content="新NISAシミュレーター・ふるさと納税計算機・住宅ローン計算機・副業税金計算機を無料で提供。広告なしで快適に使えるシンプルな金融ツール集です。">
   <meta property="og:title" content="マネーツールズ | 無料の金融計算機まとめ">
-  <meta property="og:description" content="新NISA・ふるさと納税・住宅ローン・副業税金を無料で計算。スマホ対応、登録不要。">
+  <meta property="og:description" content="新NISA・ふるさと納税・住宅ローン・副業税金・家計簿＆サブスク管理を無料で計算。スマホ対応、登録不要。">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://hinata0320.github.io/finance-tools/">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
@@ -127,5 +131,10 @@
   </div>
 </footer>
 
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+</script>
 </body>
 </html>

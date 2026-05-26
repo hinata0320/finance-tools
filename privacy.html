@@ -4,7 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>プライバシーポリシー | マネーツールズ</title>
+  <meta name="description" content="マネーツールズのプライバシーポリシー。データの取り扱い・広告・アフィリエイトについて説明します。">
   <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
@@ -18,6 +22,7 @@
       <a href="furusato.html">ふるさと納税</a>
       <a href="loan.html">住宅ローン</a>
       <a href="tax.html">副業税金</a>
+      <a href="kakeibo.html">家計簿</a>
     </nav>
   </div>
 </header>
@@ -31,20 +36,39 @@
   <div class="card" style="margin:28px 0;line-height:1.9;font-size:.9rem;color:var(--gray-700);">
 
     <h2 style="margin-bottom:12px;">1. 個人情報の収集について</h2>
-    <p>本サイト（マネーツールズ）では、計算機に入力された数値はすべてお客様のブラウザ内のみで処理されます。入力値はサーバーに送信・保存されることはありません。</p>
+
+    <h3 style="margin-bottom:8px;font-size:.95rem;">■ 計算ツール全般（新NISA・ふるさと納税・住宅ローン・副業税金）</h3>
+    <p>各計算ツールに入力された数値はすべてお客様のブラウザ内のみで処理されます。入力値はサーバーに送信・保存されることはありません。</p>
+
+    <h3 style="margin-top:16px;margin-bottom:8px;font-size:.95rem;">■ 家計簿 &amp; サブスク管理機能</h3>
+    <p>家計簿・サブスク管理ページ（kakeibo.html）に登録した収支・サブスク情報は、<strong>お使いのブラウザの localStorage にのみ保存</strong>されます。当サイトのサーバーや第三者には一切送信されません。データはブラウザのキャッシュクリアや localStorage の削除を行うと消去されます。</p>
+
+    <h3 style="margin-top:16px;margin-bottom:8px;font-size:.95rem;">■ CSV・メールファイル（.eml）のアップロード</h3>
+    <p>クレジットカード・銀行明細のCSVファイルおよびメールファイル（.eml）をアップロードする機能があります。これらのファイルは<strong>ブラウザ上でのみ処理</strong>され、外部サーバーへの送信は行われません。解析後のデータは localStorage に保存されるか、ページを閉じると破棄されます。</p>
+
+    <h3 style="margin-top:16px;margin-bottom:8px;font-size:.95rem;">■ Gmail 連携機能</h3>
+    <p>家計簿ページでは、Gmail と連携してサブスクを自動検出する機能をご利用いただけます。この機能をご利用になる場合、Google アカウントによる OAuth 2.0 認証が必要です。</p>
+    <ul style="margin-top:8px;padding-left:1.4em;">
+      <li>取得するスコープ：<code>gmail.readonly</code>（メールの読み取りのみ、送信・削除は一切行いません）</li>
+      <li>取得したアクセストークンはブラウザのメモリにのみ保持され、当サイトのサーバーへの送信・永続保存は行いません</li>
+      <li>メールの内容はブラウザ内で解析され、サブスク情報の抽出のみに使用します</li>
+      <li>Google のデータ利用については <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google プライバシーポリシー</a> をご参照ください</li>
+    </ul>
+    <p style="margin-top:8px;">Gmail 連携は任意の機能です。ご利用いただかなくても家計簿・サブスク管理の他の機能はすべてお使いいただけます。</p>
 
     <h2 style="margin-top:24px;margin-bottom:12px;">2. アクセス解析ツールについて</h2>
-    <p>本サイトでは、Google Analytics（GA4）を使用してアクセス状況を分析しています。Google Analyticsはトラフィックデータの収集のためにCookieを使用しています。このデータは匿名で収集されており、個人を特定するものではありません。</p>
-    <p style="margin-top:8px;">Google Analyticsの利用規約：<a href="https://marketingplatform.google.com/about/analytics/terms/jp/" target="_blank" rel="noopener">https://marketingplatform.google.com/</a></p>
+    <p>本サイトでは、Google Analytics（GA4）を使用してアクセス状況を分析しています。Google Analytics はトラフィックデータの収集のために Cookie を使用しています。このデータは匿名で収集されており、個人を特定するものではありません。</p>
+    <p style="margin-top:8px;">Google Analytics の利用規約：<a href="https://marketingplatform.google.com/about/analytics/terms/jp/" target="_blank" rel="noopener">https://marketingplatform.google.com/</a></p>
 
     <h2 style="margin-top:24px;margin-bottom:12px;">3. 広告について（Google AdSense）</h2>
-    <p>本サイトでは、第三者配信の広告サービス「Google AdSense」を使用しています。広告配信にはCookieが使用され、お客様の過去の訪問情報に基づいて広告が表示されることがあります。Googleによるデータ使用についての詳細は、<a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google のポリシーと規約</a>をご確認ください。</p>
+    <p>本サイトでは、第三者配信の広告サービス「Google AdSense」を使用しています。広告配信には Cookie が使用され、お客様の過去の訪問情報に基づいて広告が表示されることがあります。Google によるデータ使用についての詳細は、<a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google のポリシーと規約</a>をご確認ください。</p>
 
     <h2 style="margin-top:24px;margin-bottom:12px;">4. アフィリエイトについて</h2>
     <p>本サイトは、Amazon.co.jp アソシエイト・プログラム、A8.net、ValueCommerce 等のアフィリエイトプログラムに参加しています。当サイトのリンクを経由して商品・サービスを購入・申込された場合、当サイトに報酬が発生します。リンク先サービスの品質や内容を保証するものではありません。</p>
 
     <h2 style="margin-top:24px;margin-bottom:12px;">5. 免責事項</h2>
     <p>本サイトの計算結果はあくまで参考値です。正確な税額・返済額・投資成果は保証されません。投資には元本割れのリスクがあります。税務・法務に関する最終判断は、税理士・公認会計士等の専門家にご相談ください。</p>
+    <p style="margin-top:8px;">家計簿・サブスク管理機能に登録した金融情報の管理はお客様ご自身の責任において行ってください。ブラウザのデータ消去等によりデータが失われた場合、当サイトは責任を負いかねます。</p>
 
     <h2 style="margin-top:24px;margin-bottom:12px;">6. プライバシーポリシーの変更</h2>
     <p>本ポリシーは予告なく変更される場合があります。変更後もサイトを継続利用された場合、変更内容に同意したものとみなします。</p>
@@ -56,6 +80,11 @@
   <div class="container">
     <div class="links">
       <a href="index.html">トップ</a>
+      <a href="nisa.html">新NISA</a>
+      <a href="furusato.html">ふるさと納税</a>
+      <a href="loan.html">住宅ローン</a>
+      <a href="tax.html">副業税金</a>
+      <a href="kakeibo.html">家計簿</a>
       <a href="privacy.html">プライバシーポリシー</a>
     </div>
     <p>© 2026 マネーツールズ</p>

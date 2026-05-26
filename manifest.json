@@ -1,0 +1,20 @@
+{
+  "name": "マネーツールズ",
+  "short_name": "マネーツールズ",
+  "description": "新NISA・ふるさと納税・住宅ローン・副業税金・家計簿＆サブスク管理の無料金融ツール集",
+  "start_url": "./kakeibo.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#6366f1",
+  "lang": "ja",
+  "categories": ["finance", "productivity"],
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
