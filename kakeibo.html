@@ -348,6 +348,42 @@
     }
     .filter-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
 
+    /* ── Suggest List (autocomplete) ── */
+    .suggest-list {
+      display: none; position: absolute; top: 100%; left: 0; right: 0;
+      background: white; border: 1.5px solid var(--primary);
+      border-top: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+      box-shadow: var(--shadow-md); z-index: 50; max-height: 240px; overflow-y: auto;
+    }
+    .suggest-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px; cursor: pointer; font-size: 13px;
+      border-bottom: 1px solid var(--gray-100);
+      transition: background .1s;
+    }
+    .suggest-item:last-child { border-bottom: none; }
+    .suggest-item:hover { background: var(--primary-light); }
+    .suggest-item .suggest-amount { font-weight: 700; color: var(--primary); font-size: 12px; }
+
+    /* ── CSV Modal ── */
+    .csv-upload-area {
+      border: 2px dashed var(--gray-300); border-radius: var(--radius);
+      padding: 32px 20px; text-align: center; cursor: pointer;
+      transition: border-color .2s;
+    }
+    .csv-upload-area:hover, .csv-upload-area.dragover { border-color: var(--primary); background: var(--primary-light); }
+    .csv-candidate-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px; border-radius: var(--radius-sm);
+      border: 1.5px solid var(--gray-200); margin-bottom: 8px;
+      background: white; cursor: pointer; transition: border-color .15s;
+    }
+    .csv-candidate-item.selected { border-color: var(--primary); background: var(--primary-light); }
+    .csv-candidate-info { flex: 1; min-width: 0; }
+    .csv-candidate-name { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .csv-candidate-meta { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+    .csv-candidate-amount { font-weight: 700; color: var(--primary); font-size: 14px; flex-shrink: 0; }
+
     /* ── Responsive ── */
     @media (min-width: 500px) {
       .sub-grid { display: grid; grid-template-columns: 1fr 1fr; }
@@ -427,7 +463,10 @@
 
     <div class="section-header">
       <div class="section-label">登録済みサブスク</div>
-      <button class="btn btn-primary btn-sm" onclick="openSubModal()">+ 追加</button>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-outline btn-sm" onclick="openCsvModal()">📄 CSV取込</button>
+        <button class="btn btn-primary btn-sm" onclick="openSubModal()">+ 追加</button>
+      </div>
     </div>
 
     <div class="sub-grid" id="sub-list"></div>
@@ -497,9 +536,11 @@
     </div>
     <form id="sub-form" onsubmit="saveSubscription(event)">
       <input type="hidden" id="sub-edit-id">
-      <div class="form-group">
-        <label class="form-label">サービス名</label>
-        <input class="form-control" id="sub-name" placeholder="例：Netflix" required>
+      <div class="form-group" style="position:relative;">
+        <label class="form-label">サービス名 <span style="font-weight:400;color:var(--gray-400);font-size:11px;">（入力すると候補が表示されます）</span></label>
+        <input class="form-control" id="sub-name" placeholder="例：Netflix、Spotify…" autocomplete="off" required
+          oninput="onSubNameInput(this.value)" onblur="setTimeout(hideSuggestions,200)">
+        <div id="sub-suggest" class="suggest-list"></div>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -548,6 +589,47 @@
   </div>
 </div>
 
+<!-- CSV Import Modal -->
+<div class="modal-overlay" id="csv-modal-overlay" onclick="closeCsvModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📄 CSV読み込み・サブスク検出</div>
+      <button class="modal-close" onclick="closeCsvModal()">✕</button>
+    </div>
+    <!-- Step 1: Upload -->
+    <div id="csv-step-upload">
+      <div class="alert-banner info" style="margin-bottom:16px;">
+        <div class="alert-icon">ℹ️</div>
+        <div class="alert-body">
+          <div class="alert-title">対応フォーマット</div>
+          楽天カード・三井住友・UFJ・イオン・PayPay等のマイページから<b>明細CSV</b>をダウンロードしてアップロードしてください。<br>
+          <span style="font-size:11px;color:inherit;opacity:.7;">※ データはブラウザ内のみで処理されます。外部に送信されません。</span>
+        </div>
+      </div>
+      <div class="csv-upload-area" id="csv-drop-zone"
+        ondragover="event.preventDefault();this.classList.add('dragover')"
+        ondragleave="this.classList.remove('dragover')"
+        ondrop="handleCsvDrop(event)">
+        <div style="font-size:44px;margin-bottom:10px;">📂</div>
+        <div style="font-weight:600;font-size:15px;margin-bottom:6px;">CSVファイルをドロップ</div>
+        <div style="color:var(--gray-400);font-size:13px;margin-bottom:16px;">または</div>
+        <input type="file" id="csv-file-input" accept=".csv,.txt" style="display:none;" onchange="handleCsvFile(event)">
+        <button class="btn btn-primary" onclick="document.getElementById('csv-file-input').click()">ファイルを選択</button>
+        <div class="form-hint" style="margin-top:10px;">Shift-JIS・UTF-8 どちらも対応</div>
+      </div>
+    </div>
+    <!-- Step 2: Result -->
+    <div id="csv-step-result" style="display:none;">
+      <div id="csv-detect-summary" style="margin-bottom:12px;"></div>
+      <div id="csv-candidate-list"></div>
+      <div style="margin-top:16px;display:flex;gap:8px;">
+        <button class="btn btn-outline" style="flex:1;" onclick="showCsvUploadStep()">← やり直す</button>
+        <button class="btn btn-primary" style="flex:1;" id="csv-add-btn" onclick="addSelectedCsvSubs()">追加する</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Transaction Modal -->
 <div class="modal-overlay" id="txn-modal-overlay" onclick="closeTxnModal(event)">
   <div class="modal">
@@ -591,6 +673,83 @@
 </div>
 
 <script>
+// =========================================================
+// SUBSCRIPTION CATALOG (人気サービス一覧)
+// =========================================================
+const SUBSCRIPTION_CATALOG = [
+  // 動画配信
+  { name: 'Netflix（スタンダード）', amount: 1590, cycle: 'monthly', category: 'entertainment', aliases: ['ネットフリックス'] },
+  { name: 'Netflix（広告つきスタンダード）', amount: 790, cycle: 'monthly', category: 'entertainment', aliases: ['netflix'] },
+  { name: 'Amazon Prime Video', amount: 600, cycle: 'monthly', category: 'entertainment', aliases: ['アマゾン','プライム'] },
+  { name: 'Amazon Prime（年払い）', amount: 5900, cycle: 'yearly', category: 'shopping', billingMonth: 1, aliases: ['アマゾン'] },
+  { name: 'Hulu', amount: 1026, cycle: 'monthly', category: 'entertainment', aliases: ['フールー'] },
+  { name: 'Disney+（月払い）', amount: 990, cycle: 'monthly', category: 'entertainment', aliases: ['ディズニー'] },
+  { name: 'Disney+（年払い）', amount: 9900, cycle: 'yearly', category: 'entertainment', billingMonth: 1, aliases: ['ディズニー'] },
+  { name: 'U-NEXT', amount: 2189, cycle: 'monthly', category: 'entertainment', aliases: ['ユーネクスト'] },
+  { name: 'dアニメストア', amount: 550, cycle: 'monthly', category: 'entertainment', aliases: ['dアニメ'] },
+  { name: 'ABEMA プレミアム', amount: 960, cycle: 'monthly', category: 'entertainment', aliases: ['アベマ'] },
+  { name: 'FOD プレミアム', amount: 976, cycle: 'monthly', category: 'entertainment', aliases: ['フジ'] },
+  { name: 'Apple TV+', amount: 900, cycle: 'monthly', category: 'entertainment', aliases: ['アップル'] },
+  { name: 'YouTube Premium', amount: 1280, cycle: 'monthly', category: 'entertainment', aliases: ['ユーチューブ'] },
+  { name: 'Lemino', amount: 990, cycle: 'monthly', category: 'entertainment', aliases: ['レミノ'] },
+  { name: 'NHKオンデマンド', amount: 990, cycle: 'monthly', category: 'entertainment', aliases: ['nhk'] },
+  { name: 'Paravi', amount: 1017, cycle: 'monthly', category: 'entertainment', aliases: ['パラビ'] },
+  { name: 'DAZN', amount: 4200, cycle: 'monthly', category: 'entertainment', aliases: ['ダゾーン'] },
+  // 音楽
+  { name: 'Spotify Premium', amount: 980, cycle: 'monthly', category: 'music', aliases: ['スポティファイ'] },
+  { name: 'Apple Music（個人）', amount: 1080, cycle: 'monthly', category: 'music', aliases: ['アップルミュージック'] },
+  { name: 'Amazon Music Unlimited', amount: 980, cycle: 'monthly', category: 'music', aliases: ['アマゾンミュージック'] },
+  { name: 'LINE MUSIC', amount: 980, cycle: 'monthly', category: 'music', aliases: ['ラインミュージック'] },
+  { name: 'AWA', amount: 960, cycle: 'monthly', category: 'music', aliases: [] },
+  { name: 'YouTube Music Premium', amount: 980, cycle: 'monthly', category: 'music', aliases: [] },
+  { name: 'mora qualitas', amount: 1980, cycle: 'monthly', category: 'music', aliases: ['モーラ'] },
+  // ゲーム
+  { name: 'Nintendo Switch Online（個人）', amount: 306, cycle: 'monthly', category: 'entertainment', aliases: ['ニンテンドー','switch'] },
+  { name: 'Nintendo Switch Online ファミリー', amount: 510, cycle: 'monthly', category: 'entertainment', aliases: ['任天堂'] },
+  { name: 'PlayStation Plus Essential', amount: 850, cycle: 'monthly', category: 'entertainment', aliases: ['ps','プレステ'] },
+  { name: 'PlayStation Plus Extra', amount: 1300, cycle: 'monthly', category: 'entertainment', aliases: ['ps','プレステ'] },
+  { name: 'PlayStation Plus Premium', amount: 1550, cycle: 'monthly', category: 'entertainment', aliases: ['ps','プレステ'] },
+  { name: 'Xbox Game Pass Ultimate', amount: 1210, cycle: 'monthly', category: 'entertainment', aliases: ['xbox'] },
+  // 仕事・学習
+  { name: 'Microsoft 365 Personal', amount: 1490, cycle: 'monthly', category: 'work', aliases: ['マイクロソフト','office365','m365'] },
+  { name: 'Adobe Creative Cloud', amount: 6480, cycle: 'monthly', category: 'work', aliases: ['アドビ','cc'] },
+  { name: 'Notion（Plus）', amount: 1600, cycle: 'monthly', category: 'work', aliases: ['ノーション'] },
+  { name: 'Slack Pro', amount: 925, cycle: 'monthly', category: 'work', aliases: ['スラック'] },
+  { name: 'Zoom Pro', amount: 2200, cycle: 'monthly', category: 'work', aliases: ['ズーム'] },
+  { name: 'Dropbox Plus', amount: 1500, cycle: 'monthly', category: 'work', aliases: ['ドロップボックス'] },
+  { name: 'GitHub Copilot', amount: 1200, cycle: 'monthly', category: 'work', aliases: ['ギットハブ'] },
+  { name: 'ChatGPT Plus', amount: 3000, cycle: 'monthly', category: 'work', aliases: ['チャットgpt','openai'] },
+  { name: 'Claude Pro', amount: 3000, cycle: 'monthly', category: 'work', aliases: ['クロード','anthropic'] },
+  { name: 'Canva Pro', amount: 1700, cycle: 'monthly', category: 'work', aliases: ['キャンバ'] },
+  { name: 'Figma（Professional）', amount: 1800, cycle: 'monthly', category: 'work', aliases: ['フィグマ'] },
+  { name: 'Udemy（サブスク）', amount: 1680, cycle: 'monthly', category: 'work', aliases: ['ユーデミー'] },
+  { name: 'Evernote（Personal）', amount: 860, cycle: 'monthly', category: 'work', aliases: ['エバーノート'] },
+  { name: '1Password', amount: 500, cycle: 'monthly', category: 'work', aliases: ['ワンパスワード'] },
+  { name: 'Grammarly Premium', amount: 1500, cycle: 'monthly', category: 'work', aliases: ['グラマリー'] },
+  { name: 'Perplexity Pro', amount: 2500, cycle: 'monthly', category: 'work', aliases: ['パープレキシティ'] },
+  // クラウドストレージ
+  { name: 'iCloud+ 50GB', amount: 130, cycle: 'monthly', category: 'utility', aliases: ['アイクラウド'] },
+  { name: 'iCloud+ 200GB', amount: 400, cycle: 'monthly', category: 'utility', aliases: ['アイクラウド'] },
+  { name: 'iCloud+ 2TB', amount: 1300, cycle: 'monthly', category: 'utility', aliases: ['アイクラウド'] },
+  { name: 'Google One 100GB', amount: 250, cycle: 'monthly', category: 'utility', aliases: ['グーグルワン'] },
+  { name: 'Google One 200GB', amount: 380, cycle: 'monthly', category: 'utility', aliases: ['グーグルワン'] },
+  { name: 'Google One 2TB', amount: 1300, cycle: 'monthly', category: 'utility', aliases: ['グーグルワン'] },
+  // 電子書籍
+  { name: 'Kindle Unlimited', amount: 980, cycle: 'monthly', category: 'entertainment', aliases: ['キンドル'] },
+  { name: '楽天マガジン', amount: 418, cycle: 'monthly', category: 'entertainment', aliases: ['楽天','rakuten'] },
+  { name: 'dマガジン', amount: 580, cycle: 'monthly', category: 'entertainment', aliases: ['dマガジン'] },
+  { name: 'ブック放題', amount: 550, cycle: 'monthly', category: 'entertainment', aliases: [] },
+  // ショッピング・ポイント
+  { name: '楽天プレミアム', amount: 2149, cycle: 'monthly', category: 'shopping', aliases: ['楽天','rakuten'] },
+  { name: 'Yahoo!プレミアム', amount: 508, cycle: 'monthly', category: 'shopping', aliases: ['ヤフー'] },
+  // フィットネス・健康
+  { name: 'Apple One（個人）', amount: 1200, cycle: 'monthly', category: 'health', aliases: ['アップルワン'] },
+  { name: 'LEAN BODY', amount: 980, cycle: 'monthly', category: 'health', aliases: ['リーンボディ'] },
+  // VPN
+  { name: 'NordVPN（月払い）', amount: 1400, cycle: 'monthly', category: 'utility', aliases: ['ノードvpn'] },
+  { name: 'ExpressVPN', amount: 1500, cycle: 'monthly', category: 'utility', aliases: ['エクスプレスvpn'] },
+];
+
 // =========================================================
 // CONSTANTS
 // =========================================================
@@ -666,6 +825,340 @@ let chartMonth   = toMonthStr(new Date());
 let ledgerFilter = 'all';
 let pieChart = null;
 let barChart = null;
+let catalogSuggestions = [];
+let csvCandidates = [];
+
+// =========================================================
+// AUTOCOMPLETE (サブスク名称候補)
+// =========================================================
+function onSubNameInput(val) {
+  const q = val.trim().toLowerCase();
+  const list = document.getElementById('sub-suggest');
+  if (!q) { hideSuggestions(); return; }
+
+  catalogSuggestions = SUBSCRIPTION_CATALOG.filter(s => {
+    const nameHit = s.name.toLowerCase().includes(q);
+    const aliasHit = (s.aliases || []).some(a => a.toLowerCase().includes(q));
+    return nameHit || aliasHit;
+  }).slice(0, 7);
+
+  if (!catalogSuggestions.length) { hideSuggestions(); return; }
+
+  list.style.display = 'block';
+  list.innerHTML = catalogSuggestions.map((s, i) => `
+    <div class="suggest-item" onclick="applyCatalogSub(${i})">
+      <span>${getSubCatIcon(s.category)} ${s.name}</span>
+      <span class="suggest-amount">${fmtYen(s.amount)}${s.cycle === 'monthly' ? '/月' : '/年'}</span>
+    </div>`).join('');
+}
+
+function hideSuggestions() {
+  const el = document.getElementById('sub-suggest');
+  if (el) { el.style.display = 'none'; el.innerHTML = ''; }
+}
+
+function applyCatalogSub(idx) {
+  const sub = catalogSuggestions[idx];
+  if (!sub) return;
+  document.getElementById('sub-name').value = sub.name;
+  document.getElementById('sub-amount').value = sub.amount;
+  const cycleEl = document.querySelector(`input[name="sub-cycle"][value="${sub.cycle}"]`);
+  if (cycleEl) cycleEl.checked = true;
+  toggleBillingMonth(sub.cycle);
+  if (sub.billingMonth) document.getElementById('sub-billing-month').value = sub.billingMonth;
+  renderSubCatChips(sub.category);
+  hideSuggestions();
+}
+
+// =========================================================
+// CSV IMPORT
+// =========================================================
+function openCsvModal() {
+  showCsvUploadStep();
+  document.getElementById('csv-modal-overlay').classList.add('open');
+}
+
+function closeCsvModal(e) {
+  if (e && e.target !== document.getElementById('csv-modal-overlay')) return;
+  document.getElementById('csv-modal-overlay').classList.remove('open');
+}
+
+function showCsvUploadStep() {
+  document.getElementById('csv-step-upload').style.display = '';
+  document.getElementById('csv-step-result').style.display = 'none';
+  document.getElementById('csv-file-input').value = '';
+}
+
+function handleCsvDrop(e) {
+  e.preventDefault();
+  document.getElementById('csv-drop-zone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) processCsvFile(file);
+}
+
+function handleCsvFile(e) {
+  const file = e.target.files[0];
+  if (file) processCsvFile(file);
+}
+
+async function processCsvFile(file) {
+  try {
+    const text = await readFileAsText(file);
+    const rows = parseCSV(text);
+    if (rows.length < 2) { toast('⚠️ CSVの読み込みに失敗しました'); return; }
+
+    const { dateCol, descCol, amountCol } = detectColumns(rows);
+    if (descCol === -1 || amountCol === -1) {
+      toast('⚠️ 列の検出に失敗しました。ヘッダー行を確認してください');
+      return;
+    }
+
+    const transactions = [];
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (row.length <= Math.max(dateCol, descCol, amountCol)) continue;
+      const amount = parseAmount(row[amountCol]);
+      if (amount <= 0) continue;
+      const dateVal = dateCol >= 0 ? parseDate(row[dateCol]) : null;
+      const desc = (row[descCol] || '').trim();
+      if (!desc) continue;
+      transactions.push({ desc, amount, date: dateVal });
+    }
+
+    csvCandidates = detectRecurring(transactions);
+    showCsvResults(csvCandidates, transactions.length);
+  } catch (err) {
+    toast('⚠️ ファイルの読み込みに失敗しました: ' + err.message);
+  }
+}
+
+async function readFileAsText(file) {
+  const buffer = await file.arrayBuffer();
+  for (const enc of ['utf-8', 'shift-jis', 'euc-jp']) {
+    try {
+      const text = new TextDecoder(enc, { fatal: true }).decode(buffer);
+      if (text.length > 0) return text;
+    } catch (_) {}
+  }
+  return new TextDecoder('utf-8', { fatal: false }).decode(buffer);
+}
+
+function parseCSV(text) {
+  return text.split(/\r?\n/).filter(l => l.trim()).map(line => {
+    const result = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { if (inQ && line[i+1] === '"') { cur += '"'; i++; } else { inQ = !inQ; } }
+      else if (ch === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+      else { cur += ch; }
+    }
+    result.push(cur.trim());
+    return result;
+  });
+}
+
+function detectColumns(rows) {
+  const header = rows[0];
+  let dateCol = -1, descCol = -1, amountCol = -1;
+  const dateKw   = ['日付', '利用日', '年月日', '取引日', '決済日', 'date'];
+  const descKw   = ['店名', '内容', '利用先', '摘要', '商品名', '加盟店', '利用店', 'description', '支払先'];
+  const amountKw = ['利用金額', '出金', '支払金額', '請求金額', 'amount', '金額', '出金額'];
+
+  header.forEach((h, i) => {
+    const lh = h.toLowerCase();
+    if (dateCol === -1   && dateKw.some(k => lh.includes(k.toLowerCase())))   dateCol = i;
+    if (descCol === -1   && descKw.some(k => lh.includes(k.toLowerCase())))   descCol = i;
+    if (amountCol === -1 && amountKw.some(k => lh.includes(k.toLowerCase()))) amountCol = i;
+  });
+
+  // Fallback: guess by position if still not found
+  if (descCol === -1 && header.length >= 2) descCol = 1;
+  if (amountCol === -1 && header.length >= 3) amountCol = 2;
+
+  return { dateCol, descCol, amountCol };
+}
+
+function parseDate(str) {
+  if (!str) return null;
+  let m = str.match(/(\d{4})[\/\-年](\d{1,2})[\/\-月](\d{1,2})/);
+  if (m) return new Date(+m[1], +m[2]-1, +m[3]);
+  m = str.match(/(\d{2})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if (m) return new Date(2000 + +m[1], +m[2]-1, +m[3]);
+  return null;
+}
+
+function parseAmount(str) {
+  if (!str) return 0;
+  return parseInt(str.replace(/[^\d]/g, '')) || 0;
+}
+
+function normalizeDesc(desc) {
+  return desc.toLowerCase()
+    .replace(/\s+/g, '')
+    .replace(/[＊\*#＃\.。、，,\-－]/g, '')
+    .replace(/[（(][^）)]*[）)]/g, '') // remove parenthetical suffixes
+    .slice(0, 20); // limit length to avoid over-matching
+}
+
+function detectRecurring(transactions) {
+  const groups = {};
+  transactions.forEach(t => {
+    const key = normalizeDesc(t.desc) + '_' + t.amount;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(t);
+  });
+
+  const candidates = [];
+  Object.values(groups).forEach(group => {
+    if (group.length < 2) return;
+
+    const amounts = group.map(t => t.amount);
+    const maxAmt  = Math.max(...amounts);
+    const minAmt  = Math.min(...amounts);
+    if (maxAmt === 0 || minAmt / maxAmt < 0.85) return;
+
+    const dates = group.map(t => t.date).filter(Boolean).sort((a, b) => a - b);
+    let cycle = null;
+    if (dates.length >= 2) {
+      const intervals = [];
+      for (let i = 1; i < dates.length; i++) {
+        intervals.push((dates[i] - dates[i-1]) / 86400000);
+      }
+      const avgInterval = intervals.reduce((a,b) => a+b,0) / intervals.length;
+      if (avgInterval >= 25 && avgInterval <= 40)  cycle = 'monthly';
+      if (avgInterval >= 355 && avgInterval <= 375) cycle = 'yearly';
+    } else {
+      cycle = 'monthly'; // assume monthly if only 2 entries without clear dates
+    }
+
+    if (!cycle) return;
+
+    const avgAmount  = Math.round(amounts.reduce((a,b) => a+b,0) / amounts.length);
+    const latestDate = dates.length ? dates[dates.length - 1] : null;
+    const guessedCat = guessCategoryFromDesc(group[0].desc);
+    const catalogMatch = SUBSCRIPTION_CATALOG.find(c =>
+      c.name.toLowerCase().includes(normalizeDesc(group[0].desc).slice(0, 6)) ||
+      group[0].desc.toLowerCase().includes(c.name.split('（')[0].toLowerCase().slice(0, 6))
+    );
+
+    candidates.push({
+      name:         catalogMatch ? catalogMatch.name : group[0].desc,
+      rawName:      group[0].desc,
+      amount:       avgAmount,
+      cycle,
+      billingDay:   latestDate ? latestDate.getDate() : 1,
+      billingMonth: latestDate ? latestDate.getMonth() + 1 : 1,
+      category:     catalogMatch ? catalogMatch.category : guessedCat,
+      count:        group.length,
+      selected:     true,
+    });
+  });
+
+  return candidates.sort((a, b) => b.count - a.count);
+}
+
+function guessCategoryFromDesc(desc) {
+  const d = desc.toLowerCase();
+  if (/netflix|hulu|disney|youtube|prime.*video|unext|abema|lemino|ufj|dアニメ/.test(d)) return 'entertainment';
+  if (/spotify|apple.*music|amazon.*music|line.*music|awa/.test(d)) return 'music';
+  if (/microsoft|adobe|notion|slack|zoom|dropbox|github|chatgpt|claude|canva|figma/.test(d)) return 'work';
+  if (/icloud|google.*one/.test(d)) return 'utility';
+  if (/amazon.*prime|楽天.*プレミアム|yahoo.*プレミアム/.test(d)) return 'shopping';
+  if (/nintendo|playstation|xbox|switch/.test(d)) return 'entertainment';
+  if (/kindle|楽天.*マガジン|dマガジン/.test(d)) return 'entertainment';
+  return 'other';
+}
+
+function showCsvResults(candidates, totalRows) {
+  document.getElementById('csv-step-upload').style.display = 'none';
+  document.getElementById('csv-step-result').style.display = '';
+
+  const summary = document.getElementById('csv-detect-summary');
+  if (!candidates.length) {
+    summary.innerHTML = `
+      <div class="alert-banner warning">
+        <div class="alert-icon">😕</div>
+        <div class="alert-body">
+          <div class="alert-title">定期支払いが見つかりませんでした</div>
+          ${totalRows}件の取引を分析しましたが、定期的なパターンが検出できませんでした。<br>
+          明細が2ヶ月以上含まれているCSVをお試しください。
+        </div>
+      </div>`;
+    document.getElementById('csv-candidate-list').innerHTML = '';
+    document.getElementById('csv-add-btn').style.display = 'none';
+    return;
+  }
+
+  summary.innerHTML = `
+    <div class="alert-banner success">
+      <div class="alert-icon">🔍</div>
+      <div class="alert-body">
+        <div class="alert-title">${candidates.length}件の定期支払いを検出しました</div>
+        ${totalRows}件の取引を分析。追加したい項目にチェックを入れてください。
+      </div>
+    </div>`;
+
+  document.getElementById('csv-add-btn').style.display = '';
+  renderCsvCandidates();
+}
+
+function renderCsvCandidates() {
+  document.getElementById('csv-candidate-list').innerHTML = csvCandidates.map((c, i) => `
+    <div class="csv-candidate-item ${c.selected ? 'selected' : ''}" onclick="toggleCsvCandidate(${i})">
+      <div style="font-size:22px;width:36px;text-align:center;flex-shrink:0;">${getSubCatIcon(c.category)}</div>
+      <div class="csv-candidate-info">
+        <div class="csv-candidate-name">${c.name}</div>
+        <div class="csv-candidate-meta">
+          ${c.cycle === 'monthly' ? `毎月${c.billingDay}日` : `毎年${c.billingMonth}月${c.billingDay}日`} ·
+          ${getSubCatLabel(c.category)} · ${c.count}回検出
+        </div>
+        ${c.name !== c.rawName ? `<div style="font-size:10px;color:var(--gray-400);margin-top:2px;">元: ${c.rawName}</div>` : ''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+        <div class="csv-candidate-amount">${fmtYen(c.amount)}<span style="font-size:11px;color:var(--gray-400);">/${c.cycle === 'monthly' ? '月' : '年'}</span></div>
+        <div style="width:22px;height:22px;border-radius:50%;border:2px solid ${c.selected ? 'var(--primary)' : 'var(--gray-300)'};
+          background:${c.selected ? 'var(--primary)' : 'white'};
+          display:flex;align-items:center;justify-content:center;color:white;font-size:12px;">
+          ${c.selected ? '✓' : ''}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleCsvCandidate(idx) {
+  csvCandidates[idx].selected = !csvCandidates[idx].selected;
+  renderCsvCandidates();
+}
+
+function addSelectedCsvSubs() {
+  const selected = csvCandidates.filter(c => c.selected);
+  if (!selected.length) { toast('⚠️ 追加する項目を選択してください'); return; }
+
+  const colors = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316'];
+  selected.forEach(c => {
+    const existing = DB.subs.find(s => s.name === c.name);
+    if (existing) return; // skip duplicates
+    DB.addSub({
+      id: uuid(),
+      name: c.name,
+      amount: c.amount,
+      cycle: c.cycle,
+      billingDay: c.billingDay,
+      billingMonth: c.billingMonth,
+      category: c.category,
+      color: colors[DB.subs.length % colors.length],
+      trialEndDate: null,
+      active: true,
+      createdAt: today(),
+    });
+  });
+
+  DB.save();
+  toast(`✅ ${selected.length}件のサブスクを追加しました`);
+  document.getElementById('csv-modal-overlay').classList.remove('open');
+  renderSubs();
+}
 
 // =========================================================
 // UTILITIES
