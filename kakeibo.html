@@ -347,6 +347,49 @@
     /* ── Chart Container ── */
     .chart-wrap { position: relative; height: 260px; }
 
+    /* ── Balance summary card ── */
+    .balance-card {
+      border-radius: var(--radius); padding: 18px; margin-bottom: 12px;
+      color: white; box-shadow: 0 4px 18px rgba(0,0,0,.15);
+    }
+    .balance-card.surplus { background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 4px 18px rgba(16,185,129,.3); }
+    .balance-card.deficit { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); box-shadow: 0 4px 18px rgba(244,63,94,.3); }
+    .balance-card.neutral { background: linear-gradient(135deg, #64748b 0%, #475569 100%); }
+    .balance-card-label { font-size: 11px; opacity: .8; margin-bottom: 4px; }
+    .balance-card-amount { font-size: 30px; font-weight: 700; letter-spacing: -.5px; margin-bottom: 12px; }
+    .balance-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .balance-card-item { background: rgba(255,255,255,.15); border-radius: 10px; padding: 8px 12px; }
+    .balance-card-item .bc-label { font-size: 10px; opacity: .8; margin-bottom: 2px; }
+    .balance-card-item .bc-value { font-size: 15px; font-weight: 700; }
+
+    /* ── Budget vs Actual ── */
+    .budget-row { padding: 8px 0; border-bottom: 1px solid var(--gray-100); }
+    .budget-row:last-child { border-bottom: none; }
+    .budget-row-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+    .budget-bar-wrap { height: 6px; background: var(--gray-100); border-radius: 99px; overflow: hidden; }
+    .budget-bar-fill { height: 100%; border-radius: 99px; transition: width .5s ease; }
+    .budget-over-mark { font-size: 10px; font-weight: 700; color: var(--danger); }
+    .budget-input-row { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+    .budget-input-row input {
+      width: 110px; text-align: right; padding: 5px 8px;
+      border: 1.5px solid var(--gray-300); border-radius: 8px; font-size: 13px;
+    }
+    .budget-input-row input:focus { outline: none; border-color: var(--primary); }
+
+    /* ── Annual summary ── */
+    .annual-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+    .annual-stat-item {
+      background: var(--gray-50); border-radius: 12px; padding: 12px 14px;
+      border: 1px solid var(--gray-100);
+    }
+    .annual-stat-item .as-label { font-size: 11px; color: var(--gray-400); margin-bottom: 4px; }
+    .annual-stat-item .as-value { font-size: 17px; font-weight: 700; color: var(--gray-900); }
+    .annual-stat-item .as-sub { font-size: 10px; color: var(--gray-400); margin-top: 2px; }
+
+    /* ── Sub trend legend ── */
+    .sub-legend-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--gray-100); }
+    .sub-legend-row:last-child { border-bottom: none; }
+
     /* ── Sub total bar ── */
     .sub-total-bar {
       background: linear-gradient(135deg, #10b981 0%, #059669 100%);
@@ -580,32 +623,70 @@
 <!-- ======================== TAB: CHARTS ======================== -->
 <section id="page-charts" class="page">
   <div class="container">
-    <div class="card">
-      <div class="section-header">
-        <div class="card-title" style="margin:0">カテゴリ別支出（今月）</div>
+
+    <!-- Month nav -->
+    <div class="card" style="padding:12px 16px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:12px;color:var(--gray-400);font-weight:500;">月次レポート</div>
         <div class="month-nav">
           <button onclick="changeChartMonth(-1)">‹</button>
-          <div class="month-label" id="chart-month-label" style="font-size:13px;min-width:70px;"></div>
+          <div id="chart-month-label" style="font-size:13px;min-width:80px;text-align:center;font-weight:600;"></div>
           <button onclick="changeChartMonth(1)">›</button>
         </div>
       </div>
-      <div class="chart-wrap" style="height:220px;margin-top:12px;">
+    </div>
+
+    <!-- 収支バランス -->
+    <div id="chart-balance-card"></div>
+
+    <!-- カテゴリ別支出 -->
+    <div class="card">
+      <div class="card-title">カテゴリ別支出</div>
+      <div class="chart-wrap" style="height:220px;margin-top:8px;">
         <canvas id="chart-pie"></canvas>
       </div>
       <div id="chart-legend" style="margin-top:12px;"></div>
     </div>
 
+    <!-- 予算 vs 実績 -->
     <div class="card">
-      <div class="card-title">月別支出推移（直近6ヶ月）</div>
+      <div class="section-header">
+        <div class="card-title" style="margin:0;">予算 vs 実績</div>
+        <button class="btn btn-sm btn-outline" onclick="toggleBudgetEdit()" id="budget-edit-btn">編集</button>
+      </div>
+      <div id="chart-budget-content"></div>
+    </div>
+
+    <!-- 月別収支推移 -->
+    <div class="card">
+      <div class="card-title">月別収支推移（直近6ヶ月）</div>
       <div class="chart-wrap">
         <canvas id="chart-bar"></canvas>
       </div>
     </div>
 
+    <!-- サブスク費用トレンド -->
     <div class="card">
-      <div class="card-title">📦 サブスク内訳</div>
-      <div id="sub-breakdown"></div>
+      <div class="card-title">サブスク費用トレンド（直近12ヶ月）</div>
+      <div class="chart-wrap" style="height:180px;">
+        <canvas id="chart-sub-trend"></canvas>
+      </div>
+      <div id="chart-sub-breakdown" style="margin-top:14px;"></div>
     </div>
+
+    <!-- 年間サマリー -->
+    <div class="card">
+      <div class="section-header">
+        <div class="card-title" style="margin:0;">年間サマリー</div>
+        <div class="month-nav">
+          <button onclick="changeChartYear(-1)">‹</button>
+          <div id="chart-year-label" style="font-size:13px;min-width:52px;text-align:center;font-weight:600;"></div>
+          <button onclick="changeChartYear(1)">›</button>
+        </div>
+      </div>
+      <div id="chart-annual-content"></div>
+    </div>
+
   </div>
 </section>
 
@@ -1138,9 +1219,12 @@ const DB = {
 // =========================================================
 let currentMonth = toMonthStr(new Date());
 let chartMonth   = toMonthStr(new Date());
+let chartYear    = new Date().getFullYear();
 let ledgerFilter = 'all';
 let pieChart = null;
 let barChart = null;
+let subTrendChart = null;
+let budgetEditMode = false;
 let catalogSuggestions = [];
 let csvCandidates = [];
 
@@ -2022,14 +2106,41 @@ function changeChartMonth(delta) {
 
 function renderCharts() {
   document.getElementById('chart-month-label').textContent = fmtMonthLabel(chartMonth);
+  renderBalanceSummary();
+  renderPieChart();
+  renderBudgetSection();
+  renderBarChart();
+  renderSubTrend();
+  renderAnnualSummary();
+}
 
-  // Pie chart: expense by category this month
+function renderBalanceSummary() {
+  const income  = DB.txns.filter(t => t.date.startsWith(chartMonth) && t.type === 'income').reduce((a,t) => a+t.amount, 0);
+  const expense = DB.txns.filter(t => t.date.startsWith(chartMonth) && t.type === 'expense').reduce((a,t) => a+t.amount, 0);
+  const balance = income - expense;
+  const cls = balance > 0 ? 'surplus' : balance < 0 ? 'deficit' : 'neutral';
+  const sign = balance > 0 ? '+' : '';
+  document.getElementById('chart-balance-card').innerHTML = `
+    <div class="balance-card ${cls}">
+      <div class="balance-card-label">収支バランス</div>
+      <div class="balance-card-amount">${sign}${fmtYen(balance)}</div>
+      <div class="balance-card-grid">
+        <div class="balance-card-item">
+          <div class="bc-label">収入</div>
+          <div class="bc-value">${fmtYen(income)}</div>
+        </div>
+        <div class="balance-card-item">
+          <div class="bc-label">支出</div>
+          <div class="bc-value">${fmtYen(expense)}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderPieChart() {
   const monthTxns = DB.txns.filter(t => t.date.startsWith(chartMonth) && t.type === 'expense');
   const catMap = {};
-  monthTxns.forEach(t => {
-    catMap[t.category] = (catMap[t.category] || 0) + t.amount;
-  });
-
+  monthTxns.forEach(t => { catMap[t.category] = (catMap[t.category] || 0) + t.amount; });
   const pieLabels = Object.keys(catMap).map(id => `${getTxnCatIcon(id)} ${getTxnCatLabel(id)}`);
   const pieData   = Object.values(catMap);
 
@@ -2038,98 +2149,242 @@ function renderCharts() {
   if (!pieData.length) {
     document.getElementById('chart-pie').style.display = 'none';
     document.getElementById('chart-legend').innerHTML = '<div style="text-align:center;color:var(--gray-400);padding:20px;font-size:13px;">この月の支出データがありません</div>';
-  } else {
-    document.getElementById('chart-pie').style.display = '';
-    pieChart = new Chart(pieCtx, {
-      type: 'doughnut',
-      data: {
-        labels: pieLabels,
-        datasets: [{ data: pieData, backgroundColor: CHART_COLORS.slice(0, pieData.length), borderWidth: 2, borderColor: '#fff' }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: ctx => ` ${fmtYen(ctx.raw)} (${Math.round(ctx.raw / pieData.reduce((a,b) => a+b,0) * 100)}%)`
-            }
-          }
-        }
-      }
-    });
+    return;
+  }
+  document.getElementById('chart-pie').style.display = '';
+  pieChart = new Chart(pieCtx, {
+    type: 'doughnut',
+    data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: CHART_COLORS.slice(0, pieData.length), borderWidth: 2, borderColor: '#fff' }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${fmtYen(ctx.raw)} (${Math.round(ctx.raw / pieData.reduce((a,b)=>a+b,0)*100)}%)` } } }
+    }
+  });
+  const total = pieData.reduce((a, b) => a + b, 0);
+  document.getElementById('chart-legend').innerHTML = pieLabels.map((label, i) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--gray-100);">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:10px;height:10px;border-radius:50%;background:${CHART_COLORS[i]};flex-shrink:0;"></div>
+        <span style="font-size:13px;">${label}</span>
+      </div>
+      <div style="font-size:13px;font-weight:600;">${fmtYen(pieData[i])} <span style="color:var(--gray-400);font-weight:400;">(${Math.round(pieData[i]/total*100)}%)</span></div>
+    </div>`).join('');
+}
 
-    // Custom legend
-    const total = pieData.reduce((a, b) => a + b, 0);
-    document.getElementById('chart-legend').innerHTML = pieLabels.map((label, i) => `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--gray-100);">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div style="width:10px;height:10px;border-radius:50%;background:${CHART_COLORS[i]};flex-shrink:0;"></div>
-          <span style="font-size:13px;">${label}</span>
+function renderBudgetSection() {
+  const budgets = JSON.parse(localStorage.getItem('kakeibo_budgets') || '{}');
+  const monthTxns = DB.txns.filter(t => t.date.startsWith(chartMonth) && t.type === 'expense');
+  const catMap = {};
+  monthTxns.forEach(t => { catMap[t.category] = (catMap[t.category] || 0) + t.amount; });
+  const expenseCats = TXN_CATEGORIES.expense;
+  const el = document.getElementById('chart-budget-content');
+
+  if (budgetEditMode) {
+    el.innerHTML = expenseCats.map(cat => {
+      const actual = catMap[cat.id] || 0;
+      const budget = budgets[cat.id] || '';
+      return `<div class="budget-row">
+        <div class="budget-row-top">
+          <span style="font-size:13px;">${cat.icon} ${cat.label}</span>
+          <span style="font-size:12px;color:var(--gray-400);">実績: ${fmtYen(actual)}</span>
         </div>
-        <div style="font-size:13px;font-weight:600;">${fmtYen(pieData[i])} <span style="color:var(--gray-400);font-weight:400;">(${Math.round(pieData[i]/total*100)}%)</span></div>
-      </div>`).join('');
+        <div class="budget-input-row">
+          <span style="font-size:12px;color:var(--gray-500);">予算</span>
+          <input class="budget-input" type="number" data-cat="${cat.id}" value="${budget}" placeholder="未設定" min="0" step="1000">
+          <span style="font-size:12px;color:var(--gray-500);">円</span>
+        </div>
+      </div>`;
+    }).join('');
+    return;
   }
 
-  // Bar chart: monthly expense last 6 months
+  const rows = expenseCats.map(cat => {
+    const actual = catMap[cat.id] || 0;
+    const budget = budgets[cat.id] || 0;
+    if (!actual && !budget) return '';
+    const pct = budget > 0 ? Math.min(Math.round(actual / budget * 100), 100) : 0;
+    const over = budget > 0 && actual > budget;
+    return `<div class="budget-row">
+      <div class="budget-row-top">
+        <span style="font-size:13px;">${cat.icon} ${cat.label}</span>
+        <span style="font-size:12px;${over ? 'color:var(--danger);font-weight:600;' : 'color:var(--gray-500);'}">
+          ${fmtYen(actual)}${budget ? ' / ' + fmtYen(budget) : ''}
+          ${over ? `<span class="budget-over-mark"> ▲超過</span>` : ''}
+        </span>
+      </div>
+      <div class="budget-bar-wrap">
+        <div class="budget-bar-fill" style="width:${budget ? pct : 100}%;background:${over ? 'var(--danger)' : budget ? 'var(--primary)' : 'var(--gray-200)'};opacity:${budget ? 1 : .3};"></div>
+      </div>
+    </div>`;
+  }).filter(Boolean).join('');
+  el.innerHTML = rows || '<div style="text-align:center;color:var(--gray-400);padding:16px;font-size:13px;">支出データがありません。「編集」で予算を設定できます</div>';
+}
+
+function toggleBudgetEdit() {
+  if (budgetEditMode) {
+    const budgets = JSON.parse(localStorage.getItem('kakeibo_budgets') || '{}');
+    document.querySelectorAll('.budget-input').forEach(inp => {
+      const val = parseInt(inp.value) || 0;
+      if (val > 0) budgets[inp.dataset.cat] = val;
+      else delete budgets[inp.dataset.cat];
+    });
+    localStorage.setItem('kakeibo_budgets', JSON.stringify(budgets));
+    budgetEditMode = false;
+    document.getElementById('budget-edit-btn').textContent = '編集';
+  } else {
+    budgetEditMode = true;
+    document.getElementById('budget-edit-btn').textContent = '保存';
+  }
+  renderBudgetSection();
+}
+
+function renderBarChart() {
   const months = [];
   for (let i = 5; i >= 0; i--) {
     const [y, m] = chartMonth.split('-').map(Number);
-    const d = new Date(y, m - 1 - i, 1);
-    months.push(toMonthStr(d));
+    months.push(toMonthStr(new Date(y, m - 1 - i, 1)));
   }
-  const barLabels = months.map(ms => { const [y,m] = ms.split('-'); return `${parseInt(m)}月`; });
-  const barExpense = months.map(ms =>
-    DB.txns.filter(t => t.date.startsWith(ms) && t.type === 'expense').reduce((a, t) => a + t.amount, 0)
-  );
-  const barIncome = months.map(ms =>
-    DB.txns.filter(t => t.date.startsWith(ms) && t.type === 'income').reduce((a, t) => a + t.amount, 0)
-  );
+  const barLabels  = months.map(ms => `${parseInt(ms.split('-')[1])}月`);
+  const barExpense = months.map(ms => DB.txns.filter(t => t.date.startsWith(ms) && t.type === 'expense').reduce((a,t) => a+t.amount, 0));
+  const barIncome  = months.map(ms => DB.txns.filter(t => t.date.startsWith(ms) && t.type === 'income').reduce((a,t) => a+t.amount, 0));
+  const barBalance = months.map((_, i) => barIncome[i] - barExpense[i]);
 
   if (barChart) barChart.destroy();
-  const barCtx = document.getElementById('chart-bar').getContext('2d');
-  barChart = new Chart(barCtx, {
+  barChart = new Chart(document.getElementById('chart-bar').getContext('2d'), {
     type: 'bar',
     data: {
       labels: barLabels,
       datasets: [
-        { label: '収入', data: barIncome, backgroundColor: '#10b98144', borderColor: '#10b981', borderWidth: 1.5, borderRadius: 4 },
-        { label: '支出', data: barExpense, backgroundColor: '#ef444444', borderColor: '#ef4444', borderWidth: 1.5, borderRadius: 4 },
+        { label: '収入', data: barIncome, backgroundColor: '#10b98133', borderColor: '#10b981', borderWidth: 1.5, borderRadius: 4 },
+        { label: '支出', data: barExpense, backgroundColor: '#ef444433', borderColor: '#ef4444', borderWidth: 1.5, borderRadius: 4 },
+        { label: '収支', data: barBalance, type: 'line', borderColor: '#8b5cf6', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#8b5cf6', tension: .3 },
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'top', labels: { font: { size: 12 } } },
-        tooltip: { callbacks: { label: ctx => ` ${fmtYen(ctx.raw)}` } }
-      },
-      scales: {
-        y: { ticks: { callback: v => '¥' + v.toLocaleString(), font: { size: 11 } } }
-      }
+      plugins: { legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 12 } }, tooltip: { callbacks: { label: ctx => ` ${fmtYen(ctx.raw)}` } } },
+      scales: { y: { ticks: { callback: v => '¥' + (v/10000).toFixed(0) + '万', font: { size: 10 } } } }
+    }
+  });
+}
+
+function renderSubTrend() {
+  const months = [];
+  const now = new Date();
+  for (let i = 11; i >= 0; i--) {
+    months.push(toMonthStr(new Date(now.getFullYear(), now.getMonth() - i, 1)));
+  }
+  const labels = months.map(ms => `${parseInt(ms.split('-')[1])}月`);
+  const data = months.map(ms => {
+    return DB.subs
+      .filter(s => s.active)
+      .reduce((sum, s) => sum + (s.cycle === 'monthly' ? s.amount : s.amount / 12), 0);
+  });
+
+  if (subTrendChart) subTrendChart.destroy();
+  subTrendChart = new Chart(document.getElementById('chart-sub-trend').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'サブスク月額合計', data,
+        borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.1)',
+        borderWidth: 2, fill: true, tension: .3, pointRadius: 3, pointBackgroundColor: '#10b981',
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${fmtYen(Math.round(ctx.raw))}` } } },
+      scales: { y: { ticks: { callback: v => '¥' + v.toLocaleString(), font: { size: 10 } }, beginAtZero: true } }
     }
   });
 
-  // Subscription breakdown
   const active = DB.subs.filter(s => s.active);
-  const breakdownEl = document.getElementById('sub-breakdown');
+  const subBreakEl = document.getElementById('chart-sub-breakdown');
   if (!active.length) {
-    breakdownEl.innerHTML = '<div style="text-align:center;color:var(--gray-400);padding:16px;font-size:13px;">サブスクが登録されていません</div>';
-  } else {
-    const total = active.reduce((a, s) => a + (s.cycle === 'monthly' ? s.amount : s.amount / 12), 0);
-    breakdownEl.innerHTML = active.map(sub => {
-      const monthly = sub.cycle === 'monthly' ? sub.amount : sub.amount / 12;
-      const pct = total > 0 ? Math.round(monthly / total * 100) : 0;
-      return `<div style="margin-bottom:10px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-          <span style="font-size:13px;">${getSubCatIcon(sub.category)} ${sub.name}</span>
-          <span style="font-size:13px;font-weight:600;">${fmtYen(sub.amount)}</span>
-        </div>
-        <div style="background:var(--gray-100);border-radius:4px;height:6px;overflow:hidden;">
-          <div style="width:${pct}%;background:var(--primary);height:100%;border-radius:4px;transition:width .5s;"></div>
-        </div>
-      </div>`;
-    }).join('');
+    subBreakEl.innerHTML = '<div style="text-align:center;color:var(--gray-400);font-size:13px;padding:8px 0;">サブスクが登録されていません</div>';
+    return;
   }
+  const total = active.reduce((a,s) => a + (s.cycle === 'monthly' ? s.amount : s.amount/12), 0);
+  subBreakEl.innerHTML = active.sort((a,b) => {
+    const am = a.cycle === 'monthly' ? a.amount : a.amount/12;
+    const bm = b.cycle === 'monthly' ? b.amount : b.amount/12;
+    return bm - am;
+  }).map(sub => {
+    const monthly = sub.cycle === 'monthly' ? sub.amount : sub.amount/12;
+    const pct = total > 0 ? Math.round(monthly/total*100) : 0;
+    return `<div class="sub-legend-row">
+      <div style="display:flex;align-items:center;gap:8px;">
+        ${renderServiceIcon(sub.name, sub.color, sub.category, 28)}
+        <span style="font-size:13px;">${sub.name}</span>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:13px;font-weight:600;">${fmtYen(sub.amount)}<span style="font-size:10px;color:var(--gray-400);">/${sub.cycle==='monthly'?'月':'年'}</span></div>
+        <div style="font-size:10px;color:var(--gray-400);">${pct}%</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderAnnualSummary() {
+  document.getElementById('chart-year-label').textContent = `${chartYear}年`;
+  const yearStr = String(chartYear);
+  const yearTxns = DB.txns.filter(t => t.date.startsWith(yearStr));
+  const income  = yearTxns.filter(t => t.type === 'income').reduce((a,t) => a+t.amount, 0);
+  const expense = yearTxns.filter(t => t.type === 'expense').reduce((a,t) => a+t.amount, 0);
+  const balance = income - expense;
+
+  const monthlyExpense = {};
+  yearTxns.filter(t => t.type === 'expense').forEach(t => {
+    const ms = t.date.slice(0,7);
+    monthlyExpense[ms] = (monthlyExpense[ms] || 0) + t.amount;
+  });
+  const expMonths = Object.entries(monthlyExpense);
+  const avgExpense = expMonths.length > 0 ? Math.round(expense / expMonths.length) : 0;
+  const maxEntry = expMonths.reduce((mx, e) => e[1] > (mx[1]||0) ? e : mx, ['', 0]);
+  const maxMonth = maxEntry[0] ? `${parseInt(maxEntry[0].split('-')[1])}月` : '-';
+  const subTotal = DB.subs.filter(s => s.active).reduce((a,s) => a + (s.cycle === 'monthly' ? s.amount*12 : s.amount), 0);
+
+  const el = document.getElementById('chart-annual-content');
+  if (!yearTxns.length) {
+    el.innerHTML = '<div style="text-align:center;color:var(--gray-400);padding:16px;font-size:13px;">この年のデータがありません</div>';
+    return;
+  }
+  el.innerHTML = `
+    <div class="annual-stat-grid">
+      <div class="annual-stat-item">
+        <div class="as-label">年間収入</div>
+        <div class="as-value" style="color:var(--success);">${fmtYen(income)}</div>
+      </div>
+      <div class="annual-stat-item">
+        <div class="as-label">年間支出</div>
+        <div class="as-value" style="color:var(--danger);">${fmtYen(expense)}</div>
+      </div>
+      <div class="annual-stat-item">
+        <div class="as-label">年間収支</div>
+        <div class="as-value" style="color:${balance>=0?'var(--success)':'var(--danger)'};">${balance>=0?'+':''}${fmtYen(balance)}</div>
+      </div>
+      <div class="annual-stat-item">
+        <div class="as-label">月平均支出</div>
+        <div class="as-value">${fmtYen(avgExpense)}</div>
+        <div class="as-sub">${expMonths.length}ヶ月分</div>
+      </div>
+      <div class="annual-stat-item">
+        <div class="as-label">最多支出月</div>
+        <div class="as-value">${maxMonth}</div>
+        <div class="as-sub">${maxEntry[1] ? fmtYen(maxEntry[1]) : '-'}</div>
+      </div>
+      <div class="annual-stat-item">
+        <div class="as-label">年間サブスク</div>
+        <div class="as-value">${fmtYen(subTotal)}</div>
+        <div class="as-sub">${DB.subs.filter(s=>s.active).length}件</div>
+      </div>
+    </div>`;
+}
+
+function changeChartYear(delta) {
+  chartYear += delta;
+  renderAnnualSummary();
 }
 
 // =========================================================
