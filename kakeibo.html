@@ -1334,12 +1334,23 @@ async function processCsvFile(file) {
 
 async function readFileAsText(file) {
   const buffer = await file.arrayBuffer();
-  for (const enc of ['utf-8', 'shift-jis', 'euc-jp']) {
+  const bytes = new Uint8Array(buffer);
+  // UTF-8 BOM → UTF-8確定
+  if (bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+    return new TextDecoder('utf-8').decode(buffer);
+  }
+  // 日本語文字数 vs ラテン拡張ゴミ文字数でスコアリングして最適エンコードを選択
+  const jpRe  = /[぀-ヿ一-鿿！-ﾟ]/g;
+  const badRe = /[-ÿ]/g;
+  let bestEnc = 'utf-8', bestScore = -Infinity;
+  for (const enc of ['shift-jis', 'euc-jp', 'utf-8']) {
     try {
       const text = new TextDecoder(enc, { fatal: true }).decode(buffer);
-      if (text.length > 0) return text;
+      const score = (text.match(jpRe) || []).length - (text.match(badRe) || []).length * 0.5;
+      if (score > bestScore) { bestScore = score; bestEnc = enc; }
     } catch (_) {}
   }
+  try { return new TextDecoder(bestEnc, { fatal: true }).decode(buffer); } catch (_) {}
   return new TextDecoder('utf-8', { fatal: false }).decode(buffer);
 }
 
@@ -1362,8 +1373,8 @@ function detectColumns(rows) {
   const header = rows[0];
   let dateCol = -1, descCol = -1, amountCol = -1;
   const dateKw   = ['日付', '利用日', '年月日', '取引日', '決済日', 'date'];
-  const descKw   = ['店名', '内容', '利用先', '摘要', '商品名', '加盟店', '利用店', 'description', '支払先'];
-  const amountKw = ['利用金額', '出金', '支払金額', '請求金額', 'amount', '金額', '出金額'];
+  const descKw   = ['店名', '内容', '利用先', '摘要', '商品名', '加盟店', '利用店', 'description', '支払先', 'お取り扱い内容'];
+  const amountKw = ['利用金額', '出金', '支払金額', '請求金額', 'amount', '金額', '出金額', 'お引出し'];
 
   header.forEach((h, i) => {
     const lh = h.toLowerCase();
@@ -1394,17 +1405,29 @@ function parseAmount(str) {
 }
 
 function normalizeDesc(desc) {
-  return desc.toLowerCase()
+  return desc
+    .replace(/^[VE]\d+\s*[@＠]?\s*/i, '')   // strip card transaction ID prefix (e.g. V285609 )
+    .toLowerCase()
     .replace(/\s+/g, '')
     .replace(/[＊\*#＃\.。、，,\-－]/g, '')
-    .replace(/[（(][^）)]*[）)]/g, '') // remove parenthetical suffixes
-    .slice(0, 20); // limit length to avoid over-matching
+    .replace(/[（(][^）)]*[）)]/g, '')
+    .replace(/[\/／]\s*[iｉ][Dｄ].*$/i, '')  // strip iD payment suffix
+    .slice(0, 25);
 }
+
+const NON_SUB_BLOCKLIST = [
+  'paypay', 'ペイペイ', 'suica', 'pasmo', 'icoca', 'toica', 'pitapa',
+  'セブンイレブン', 'ファミリーマート', 'ローソン', 'ミニストップ',
+  'マクドナルド', 'ヤフーショッピング', 'mercari', 'メルカリ',
+  'rakuten', '楽天', 'amazon.co.jp', 'コンビニ',
+];
 
 function detectRecurring(transactions) {
   const groups = {};
   transactions.forEach(t => {
-    const key = normalizeDesc(t.desc) + '_' + t.amount;
+    const norm = normalizeDesc(t.desc);
+    if (NON_SUB_BLOCKLIST.some(b => norm.includes(b.toLowerCase().replace(/\s/g, '')))) return;
+    const key = norm + '_' + t.amount;
     if (!groups[key]) groups[key] = [];
     groups[key].push(t);
   });
