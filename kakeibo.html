@@ -1409,7 +1409,7 @@ function normalizeDesc(desc) {
     .replace(/^[VE]\d+\s*[@＠]?\s*/i, '')   // strip card transaction ID prefix (e.g. V285609 )
     .toLowerCase()
     .replace(/\s+/g, '')
-    .replace(/[＊\*#＃\.。、，,\-－]/g, '')
+    .replace(/[＊\*#＃\.。、，,\-－−―—–]/g, '')
     .replace(/[（(][^）)]*[）)]/g, '')
     .replace(/[\/／]\s*[iｉ][Dｄ].*$/i, '')  // strip iD payment suffix
     .slice(0, 25);
@@ -1417,9 +1417,18 @@ function normalizeDesc(desc) {
 
 const NON_SUB_BLOCKLIST = [
   'paypay', 'ペイペイ', 'suica', 'pasmo', 'icoca', 'toica', 'pitapa',
+  'モバイルsuica', 'モバイルｓｕｉｃａ', 'モバイルpasmo', 'モバイルｐａｓｍｏ',
   'セブンイレブン', 'ファミリーマート', 'ローソン', 'ミニストップ',
   'マクドナルド', 'ヤフーショッピング', 'mercari', 'メルカリ',
   'rakuten', '楽天', 'amazon.co.jp', 'コンビニ',
+  'スマートｅｘ', 'smartex',
+  'パソコン振込', '振込手数料',
+  'ｾｿﾞﾝ', 'セゾン',
+  'pedfac',
+  'サミット', 'イオン', 'ライフ', 'マルエツ', 'ヨーカドー', '業務スーパー',
+  'キャナルリゾート', 'ホテル', '旅館',
+  'ラクテントラベル', '楽天トラベル',
+  'バスツアー', 'バスバスツ',
 ];
 
 function detectRecurring(transactions) {
@@ -1427,38 +1436,49 @@ function detectRecurring(transactions) {
   transactions.forEach(t => {
     const norm = normalizeDesc(t.desc);
     if (NON_SUB_BLOCKLIST.some(b => norm.includes(b.toLowerCase().replace(/\s/g, '')))) return;
-    const key = norm + '_' + t.amount;
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(t);
+    // Group by description only (not amount) to handle exchange rate fluctuations
+    if (!groups[norm]) groups[norm] = [];
+    groups[norm].push(t);
   });
 
   const candidates = [];
   Object.values(groups).forEach(group => {
     if (group.length < 2) return;
 
-    const amounts = group.map(t => t.amount);
-    const maxAmt  = Math.max(...amounts);
-    const minAmt  = Math.min(...amounts);
-    if (maxAmt === 0 || minAmt / maxAmt < 0.85) return;
+    // Use median amount; filter outliers (>40% from median) to handle prorated/first-month payments
+    const sorted = [...group].sort((a, b) => a.amount - b.amount);
+    const medianAmt = sorted[Math.floor(sorted.length / 2)].amount;
+    if (medianAmt === 0) return;
+    const consistent = group.filter(t => Math.abs(t.amount - medianAmt) / medianAmt <= 0.40);
+    if (consistent.length < 2) return;
 
-    const dates = group.map(t => t.date).filter(Boolean).sort((a, b) => a - b);
+    // Deduplicate same-day entries, then check monthly intervals
+    const seenDays = new Set();
+    const uniqueDates = [];
+    consistent.forEach(t => {
+      if (!t.date) return;
+      const key = t.date.getFullYear() + '-' + t.date.getMonth() + '-' + t.date.getDate();
+      if (!seenDays.has(key)) { seenDays.add(key); uniqueDates.push(t.date); }
+    });
+    uniqueDates.sort((a, b) => a - b);
+
     let cycle = null;
-    if (dates.length >= 2) {
+    if (uniqueDates.length >= 2) {
       const intervals = [];
-      for (let i = 1; i < dates.length; i++) {
-        intervals.push((dates[i] - dates[i-1]) / 86400000);
+      for (let i = 1; i < uniqueDates.length; i++) {
+        intervals.push((uniqueDates[i] - uniqueDates[i-1]) / 86400000);
       }
       const avgInterval = intervals.reduce((a,b) => a+b,0) / intervals.length;
       if (avgInterval >= 25 && avgInterval <= 40)  cycle = 'monthly';
       if (avgInterval >= 355 && avgInterval <= 375) cycle = 'yearly';
-    } else {
-      cycle = 'monthly'; // assume monthly if only 2 entries without clear dates
+    } else if (uniqueDates.length < 2) {
+      return; // not enough distinct dates to confirm recurrence
     }
 
     if (!cycle) return;
 
-    const avgAmount  = Math.round(amounts.reduce((a,b) => a+b,0) / amounts.length);
-    const latestDate = dates.length ? dates[dates.length - 1] : null;
+    const avgAmount  = Math.round(consistent.map(t => t.amount).reduce((a,b) => a+b,0) / consistent.length);
+    const latestDate = uniqueDates.length ? uniqueDates[uniqueDates.length - 1] : null;
     const guessedCat = guessCategoryFromDesc(group[0].desc);
     const catalogMatch = SUBSCRIPTION_CATALOG.find(c =>
       c.name.toLowerCase().includes(normalizeDesc(group[0].desc).slice(0, 6)) ||
@@ -1473,7 +1493,7 @@ function detectRecurring(transactions) {
       billingDay:   latestDate ? latestDate.getDate() : 1,
       billingMonth: latestDate ? latestDate.getMonth() + 1 : 1,
       category:     catalogMatch ? catalogMatch.category : guessedCat,
-      count:        group.length,
+      count:        consistent.length,
       selected:     true,
     });
   });

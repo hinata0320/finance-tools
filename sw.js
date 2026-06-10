@@ -1,4 +1,4 @@
-const CACHE = 'money-tools-v2';
+const CACHE = 'money-tools-v3';
 const PRECACHE = [
   './',
   './index.html',
